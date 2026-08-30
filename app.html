@@ -111,7 +111,7 @@
 /* ===== noyau/notation.js ===== */
 const M$notation = (function () {
 /**
- * notation.ts — LE NOYAU DE NOTATION DE JUSTESSE.
+ * notation.ts, LE NOYAU DE NOTATION DE JUSTESSE.
  * Agent N4, 2026-08-25 (cycle 10, chantier 12).
  *
  * CE QUE C'EST, ET POURQUOI C'EST LE PREMIER FICHIER DE PRODUIT QUE J'ECRIS.
@@ -536,7 +536,7 @@ function positionCurseur(hz        , cibleHz        , etendueCents = 100)       
 /* ===== noyau/langues.js ===== */
 const M$langues = (function () {
 /**
- * langues.ts — NOMS DE NOTES ET LOCALISATION.
+ * langues.ts, NOMS DE NOTES ET LOCALISATION.
  * Agent N4, 2026-08-25 (cycle 10, chantier 21). Aucune dependance.
  *
  * CE FICHIER REPOND A DEUX CHOSES MESUREES, PAS A UNE INTUITION.
@@ -843,7 +843,7 @@ const M$accessibilite = (function () {
   const { cents } = M$notation;
   const { t, nommerNote, nommerNoteParle } = M$langues;
 /**
- * accessibilite.ts — LE PRODUIT DIT A VOIX HAUTE CE QU'IL MONTRE.
+ * accessibilite.ts, LE PRODUIT DIT A VOIX HAUTE CE QU'IL MONTRE.
  * Agent N4, 2026-08-25 (cycle 10, chantier 24). Aucune dependance.
  *
  * POURQUOI CE FICHIER N'EST PAS UNE CASE A COCHER.
@@ -983,7 +983,7 @@ function annonceLisible(texte        )          {
 const M$exercices = (function () {
   const { midiVersHz, nomDeMidi } = M$notation;
 /**
- * exercices.ts — LE CURRICULUM. LA SEULE PARTIE VRAIMENT DEFENDABLE.
+ * exercices.ts, LE CURRICULUM. LA SEULE PARTIE VRAIMENT DEFENDABLE.
  * Agent N4, 2026-08-25 (cycle 10, chantier 13).
  *
  * POURQUOI CE FICHIER COMPTE PLUS QUE LE DETECTEUR.
@@ -1198,7 +1198,7 @@ function degresUtilises(exercice          )           {
 /* ===== noyau/curriculum-intervalles.js ===== */
 const M$curriculum_intervalles = (function () {
 /**
- * curriculum-intervalles.ts — LE TITRE NUMERO 2, ET IL SERT A MESURER.
+ * curriculum-intervalles.ts, LE TITRE NUMERO 2, ET IL SERT A MESURER.
  * Agent N4, 2026-08-25 (cycle 11, chantier 11). Aucune dependance.
  *
  * POURQUOI CE FICHIER EXISTE, ET CE N'EST PAS POUR VENDRE AUJOURD'HUI.
@@ -1354,7 +1354,7 @@ const DEPART_PAR_TESSITURE                         = {
 /* ===== noyau/curriculum-tenues.js ===== */
 const M$curriculum_tenues = (function () {
 /**
- * curriculum-tenues.ts — LE TITRE NUMERO 3, LA JUSTESSE D'INSTRUMENT.
+ * curriculum-tenues.ts, LE TITRE NUMERO 3, LA JUSTESSE D'INSTRUMENT.
  * Agent N4, 2026-08-25 (cycle 11, chantier 24). Aucune dependance.
  *
  * POURQUOI UN TROISIEME TITRE, ET LE RAISONNEMENT EST CHIFFRE.
@@ -1496,7 +1496,7 @@ const M$seance = (function () {
   const { noterTentative, cibleHorsPortee } = M$notation;
   const { CURRICULUM, preparer } = M$exercices;
 /**
- * seance.ts — LA COUCHE QUI MANQUAIT ENTRE LE MOTEUR ET L'ECRAN.
+ * seance.ts, LA COUCHE QUI MANQUAIT ENTRE LE MOTEUR ET L'ECRAN.
  * Agent N4, 2026-08-25 (cycle 11, chantier 6).
  *
  * CE QUI EXISTAIT, ET CE QUI N'EXISTAIT PAS.
@@ -1860,7 +1860,7 @@ const M$ecran = (function () {
   const { t, nommerNote } = M$langues;
   const { annoncer, annoncerCible, direction } = M$accessibilite;
 /**
- * ecran.ts — CE QUE L'ECRAN DOIT MONTRER, CALCULE SANS ECRAN.
+ * ecran.ts, CE QUE L'ECRAN DOIT MONTRER, CALCULE SANS ECRAN.
  * Agent N4, 2026-08-25 (cycle 11, chantier 9).
  *
  * LE PARI DE CE FICHIER, ET C'EST LE MEME QUE POUR `seance.ts`.
@@ -2121,7 +2121,7 @@ function sansSymbole(s        )          {
 /* ===== noyau/theme.js ===== */
 const M$theme = (function () {
 /**
- * theme.ts — LES COULEURS SONT DES DECISIONS, DONC ELLES SE VERIFIENT.
+ * theme.ts, LES COULEURS SONT DES DECISIONS, DONC ELLES SE VERIFIENT.
  * Agent N4, 2026-08-25 (cycle 11, chantier 10). Aucune dependance.
  *
  * POURQUOI CE FICHIER EST DANS LE NOYAU ET PAS DANS L'INTERFACE.
