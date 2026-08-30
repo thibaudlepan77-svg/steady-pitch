@@ -48,6 +48,43 @@ at 415. The reference is exposed, with those values offered.
 Get this wrong and every reading is off by a fixed amount that looks like the
 player being flat.
 
+## How accurate it is, measured
+
+`test-justesse.js` pulls the detector out of the published `app.html` and runs
+it against synthetic signals, at the window the product actually uses, 2048
+samples. No dependencies.
+
+```
+node test-justesse.js
+```
+
+Error in cents, signed. Positive means it reports you sharper than you are.
+
+    note   Hz        harmonic-rich   pure sine
+    C2     65.41         +5.3          +23.8
+    E2     82.41         +2.4          +29.8
+    G2     98.00         +1.6          +15.5
+    A2    110.00         +4.7          +13.1
+    C3    130.81         +4.0           +9.1
+    A3    220.00         +0.7           +8.9
+    A4    440.00         +0.4           +2.6
+    A5    880.00         +0.7           +2.1
+
+The harmonic-rich column is a voice or an instrument, with the fundamental
+deliberately weaker than the second harmonic, which is the case that makes a
+naive detector jump an octave. It never does here, and it stays under six cents
+across the whole range.
+
+The pure sine column is the honest bad news. A sine has no upper partials to
+constrain the lag estimate, and at 82 Hz a 2048 sample window holds barely two
+periods inside the search range, so the reading drifts sharp by up to thirty
+cents. If you test this with a tone generator rather than a voice, that is what
+you will see, and it is a property of the window rather than a bug you can
+report.
+
+At the edges it stays quiet rather than guessing. Below the 65.41 Hz floor, on
+silence, and on white noise, it returns no note at all.
+
 ## Running it
 
 No build step, no dependency. `app.html` is one self contained file. Open it
@@ -62,9 +99,10 @@ Then open `app.html` in a browser with Web Audio support.
 
 ## Layout
 
-    index.html   the landing page
-    app.html     the tool, one file, no imports
-    og.png       share card
+    index.html         the landing page
+    app.html           the tool, one file, no imports
+    test-justesse.js   accuracy measurement, plain node
+    og.png             share card
 
 Identifiers and comments in `app.html` are in French.
 
