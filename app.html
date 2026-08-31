@@ -971,7 +971,15 @@ function annoncerProgression(reussies        , total        ,
  * doit contenir aucun caractere qui se lise mal. On le VERIFIE au lieu de le
  * promettre, et le banc s'en sert sur toutes les chaines de toutes les langues.
  */
-const SYMBOLES_INTERDITS = /[+\-−–—#%<>*_|/\\~^=@&]/;
+// LES TROIS TIRETS SONT ECRITS EN POINTS DE CODE, ET C'EST DELIBERE.
+// Ce sont des DONNEES, la liste des caracteres qu'un lecteur d'ecran prononce
+// mal, et non de la prose. Ecrits en clair, ils se font emporter par un
+// nettoyage de tirets, et le 2026-08-31 c'est exactement ce qui est arrive.
+// La classe est devenue un intervalle a l'envers et trois bancs sont tombes.
+// Ce jour-la le message d'erreur etait franc. Une autre corruption du meme
+// genre resterait valide et se contenterait de ne plus rien trouver, en
+// silence, ce qui est le pire des deux.
+const SYMBOLES_INTERDITS = /[+\-\u2212\u2013\u2014#%<>*_|/\\~^=@&]/;
 
 function annonceLisible(texte        )          {
   return texte.length > 0 && !SYMBOLES_INTERDITS.test(texte);
@@ -2525,12 +2533,115 @@ function yinDetect(
   const confiance = 1.0 - Math.min(Math.max(brut, 0.0), 1.0);
   return { hz: frequenceEchantillonnage / affine, confiance };
 }
-  return { prochainePuissanceDeDeux, fft, autocorrelationParFft, YIN_SEUIL_DEFAUT, YIN_BIAIS, YIN_FREQ_MIN, VOLUME_MIN_DEFAUT, yinDetect };
+
+// ---------------------------------------------------------------------------
+// 3. L'AFFINAGE, AJOUTE LE 2026-08-31 (cycle 16)
+// ---------------------------------------------------------------------------
+
+/**
+ * POURQUOI CETTE FONCTION EXISTE, ET POURQUOI ELLE EST A COTE ET NON DEDANS.
+ *
+ * LE DEFAUT, MESURE. `yinDetect` lit systematiquement TROP HAUT, de un cent
+ * environ sur un la 440 et de pres de trente cents sur un son grave. Le biais
+ * est toujours positif, jamais negatif, ce qui designe une cause et pas du
+ * bruit.
+ *
+ * LA CAUSE. L'autocorrelation par FFT est BIAISEE. A l'ecart tau elle ne somme
+ * que les N moins tau echantillons qui se recouvrent, et elle divise quand
+ * meme par N. Elle decroit donc avec tau pour une raison purement arithmetique.
+ * Or la difference de YIN s'ecrit ici `2 r0 moins 2 acf`, formule qui suppose
+ * les deux termes de puissance egaux a r0. Ils ne le sont pas, la difference
+ * est donc surestimee d'autant plus que tau est grand, le minimum se deplace
+ * vers les tau COURTS, et un tau court veut dire une frequence haute. Cela
+ * explique le sens du biais et le fait qu'il grossisse dans le grave, ou tau
+ * est grand.
+ *
+ * POURQUOI JE NE CORRIGE PAS `yinDetect`. C'est un portage fidele de
+ * `pitchy::yinDetect`, et `test-pitch.ts` compare 326 tampons a la reference
+ * Python au dix-millieme de cent pres. Ce banc ne mesure pas la justesse, il
+ * mesure la FIDELITE du portage, et c'est sa raison d'etre. Le corriger dedans
+ * ferait passer 326 epreuves au rouge et me priverait du seul controle qui
+ * m'avertirait d'une derive future. La correction vient donc APRES, elle a son
+ * propre banc, et elle se mesure en cents contre des frequences connues.
+ *
+ * CE QU'ELLE FAIT. Elle repart de l'estimation grossiere, et recalcule la
+ * VRAIE difference de YIN sur une poignee d'ecarts autour d'elle, avec une
+ * fenetre de comparaison de longueur CONSTANTE. Longueur constante veut dire
+ * que le biais ci-dessus ne peut plus exister, chaque tau est evalue sur
+ * exactement le meme nombre de termes.
+ */
+
+/**
+ * Le rayon de recherche, en PART DE LA PERIODE et non en echantillons.
+ *
+ * PREMIERE VERSION, TROIS ECHANTILLONS, ET SON ECHEC MESURE. Le biais a
+ * corriger vaut jusqu'a trente cents, ce qui fait NEUF echantillons sur un mi
+ * grave et moins d'un sur un la aigu. Un rayon fixe rate donc exactement les
+ * cas pour lesquels il a ete ecrit, et le banc l'a montre, la sinusoide a
+ * 82 Hz ressortait inchangee.
+ *
+ * Quatre pour cent de la periode couvrent soixante-dix cents de part et
+ * d'autre, largement de quoi rattraper le pire biais mesure. Et cela reste
+ * loin du minimum concurrent le plus proche, qui est a la moitie ou au double
+ * de la periode, donc l'affinage ne peut pas changer de note en chemin.
+ */
+const AFFINAGE_PART = 0.04;
+const AFFINAGE_RAYON_MIN = 3;
+
+/**
+ * Affine une hauteur deja trouvee. Rend la hauteur affinee, ou la hauteur
+ * d'entree telle quelle quand elle sort de ce que la fenetre permet de mesurer.
+ */
+function affinerHauteur(
+  buf                                        ,
+  hz        ,
+  frequenceEchantillonnage = 44100.0,
+)         {
+  if (hz <= 0) return hz;
+
+  const n = buf.length;
+  const tauCentre = frequenceEchantillonnage / hz;
+  // La fenetre de comparaison. Constante pour tous les tau, c'est tout
+  // l'objet de cette fonction.
+  const largeur = n >> 1;
+  const rayon = Math.max(AFFINAGE_RAYON_MIN, Math.round(tauCentre * AFFINAGE_PART));
+  const tauMin = Math.max(1, Math.floor(tauCentre) - rayon);
+  const tauMax = Math.min(n - largeur, Math.ceil(tauCentre) + rayon);
+  if (tauMax - tauMin < 2) return hz;
+
+  const d = new Float64Array(tauMax - tauMin + 1);
+  for (let tau = tauMin; tau <= tauMax; tau++) {
+    let somme = 0.0;
+    for (let j = 0; j < largeur; j++) {
+      const ecart = buf[j] - buf[j + tau];
+      somme += ecart * ecart;
+    }
+    d[tau - tauMin] = somme;
+  }
+
+  let creux = 0;
+  for (let i = 1; i < d.length; i++) if (d[i] < d[creux]) creux = i;
+
+  // Un minimum sur un bord n'est pas un minimum, c'est une pente qui sort de
+  // la fenetre. On rend alors l'estimation d'origine plutot qu'un chiffre
+  // fabrique par une interpolation sans point a droite ou a gauche.
+  if (creux === 0 || creux === d.length - 1) return hz;
+
+  let tauAffine = tauMin + creux;
+  const a = (d[creux - 1] + d[creux + 1] - 2 * d[creux]) / 2;
+  if (Math.abs(a) > 1e-12) {
+    const delta = -((d[creux + 1] - d[creux - 1]) / 2) / (2 * a);
+    if (Math.abs(delta) < 1.0) tauAffine += delta;
+  }
+
+  return tauAffine > 0 ? frequenceEchantillonnage / tauAffine : hz;
+}
+  return { prochainePuissanceDeDeux, fft, autocorrelationParFft, YIN_SEUIL_DEFAUT, YIN_BIAIS, YIN_FREQ_MIN, VOLUME_MIN_DEFAUT, yinDetect, affinerHauteur };
 })();
 
 /* ===== micro-web.js ===== */
 const M$micro_web = (function () {
-  const { yinDetect } = M$pitch;
+  const { yinDetect, affinerHauteur } = M$pitch;
 /**
  * micro-web.js - LE SEUL FICHIER DE LA VERSION WEB QUI TOUCHE AU MATERIEL.
  * Agent N4, 2026-08-28 (cycle 12).
@@ -2786,7 +2897,16 @@ async function ecouter(surTrame, sourceDeTest = null) {
   receveur = (echantillons) => {
     if (!vivant) return;
     const r = yinDetect(echantillons, frequence, VOLUME_MIN);
-    const trame = { hz: r.hz, confiance: r.confiance };
+    // L'AFFINAGE, AJOUTE LE 2026-08-31. Le detecteur lit systematiquement trop
+    // haut, d'un cent sur un la et de trente dans le grave, pour une raison
+    // arithmetique expliquee dans `affinerHauteur`. Sans cette ligne le
+    // moniteur de la page d'accueil et l'entrainement diraient deux nombres
+    // differents sur la meme note tenue, et un eleve qui voit ca ne croit plus
+    // aucun des deux.
+    const trame = {
+      hz: r.hz > 0 ? affinerHauteur(echantillons, r.hz, frequence) : r.hz,
+      confiance: r.confiance,
+    };
     trames.push(trame);
     if (surTrame) surTrame(trame);
   };
@@ -3133,7 +3253,12 @@ function symbole(ton) {
   // La forme vient du noyau, on la traduit en un caractere que tout ecran sait
   // dessiner. Aucun de ces caracteres n'est lu a haute voix, l'annonce vocale
   // est un texte separe.
-  return { cercle: "●", triangle: "▲", croix: "✖", carre: "■", tiret: "—" }[FORME_DE_TON[ton]] || "●";
+  //
+  // Le dernier est ecrit en point de code, comme la liste de symboles interdits
+  // de `accessibilite.js`, et pour la meme raison. C'est un DESSIN et non de la
+  // ponctuation. Le 2026-08-31 un nettoyage de tirets l'a transforme en virgule,
+  // et le produit aurait affiche une virgule la ou il annonce une barre.
+  return { cercle: "●", triangle: "▲", croix: "✖", carre: "■", tiret: "\u2014" }[FORME_DE_TON[ton]] || "●";
 }
 
 // --- ecran 3, le resume ----------------------------------------------------
