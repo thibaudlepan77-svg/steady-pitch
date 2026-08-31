@@ -76,6 +76,8 @@
   .bornes{display:flex;justify-content:space-between;
     font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--doux);
     margin-top:.3rem}
+  #mon-trace{display:block;width:100%;height:110px;margin-top:1rem;
+    background:var(--surlign);border-radius:.3rem}
   .reglages{display:flex;flex-wrap:wrap;gap:.9rem;align-items:center;
     margin-top:1rem;font-family:"IBM Plex Mono",monospace;font-size:.74rem;
     color:var(--doux)}
@@ -116,6 +118,8 @@
       <p id="mon-ecart">sing or play a note</p>
       <div id="mon-jauge" data-etat="muet"><div id="mon-aiguille"></div></div>
       <div class="bornes"><span>50 cents flat</span><span>in tune</span><span>50 cents sharp</span></div>
+      <canvas id="mon-trace" height="110"></canvas>
+      <div class="bornes"><span>ten seconds ago</span><span>now</span></div>
       <div class="reglages">
         <label>notes
           <select id="mon-systeme">
@@ -648,10 +652,116 @@ const dernieres = [];
 const PATIENCE = 8;
 let muettes = 0;
 
+/**
+ * LA TRACE, AJOUTEE LE 2026-08-31 (cycle 16).
+ *
+ * POURQUOI. Le produit dominant de cette niche, `Vocal Pitch Monitor`, ne fait
+ * qu'une chose, il dessine la hauteur qui defile, et c'est ce que ses
+ * utilisateurs citent en premier. Un moniteur qui n'affiche qu'un chiffre dit
+ * ou vous ETES. Il ne dit pas si vous DERIVEZ, si vous attaquez par en dessous,
+ * ni si la fin de votre phrase s'affaisse. Or ces trois defauts sont ceux que
+ * l'on vient corriger, et aucun ne tient dans un nombre.
+ *
+ * La trace garde les trames MUETTES, sous forme de trous. Un silence entre deux
+ * syllabes fait partie de ce qu'on veut voir, et une courbe qui relie deux
+ * notes separees par une respiration raconterait un glissando qui n'a pas eu
+ * lieu.
+ */
+const TRACE_SECONDES = 10;
+const trace = [];
+let traceMaxPoints = 240;
+
 function mediane(xs) {
   const tri = [...xs].sort((a, b) => a - b);
   const m = tri.length >> 1;
   return tri.length % 2 ? tri[m] : (tri[m - 1] + tri[m]) / 2;
+}
+
+/**
+ * Dessine la trace. `null` marque une trame sans note.
+ *
+ * L'echelle verticale suit ce qui a ete chante plutot qu'une tessiture fixe.
+ * Une echelle fixe ecraserait une voix de basse en bas de l'image et laisserait
+ * les trois quarts vides, et l'ecart de quelques cents qu'on vient observer y
+ * serait invisible. Le plancher de deux demi-tons evite l'effet inverse, une
+ * note tenue parfaitement juste dont le moindre tremblement remplirait l'ecran.
+ */
+function dessinerTrace() {
+  const toile = elt("mon-trace");
+  if (!toile || typeof toile.getContext !== "function") return;
+  const ctx = toile.getContext("2d");
+  if (!ctx) return;
+
+  const ratio = window.devicePixelRatio || 1;
+  const largeur = toile.clientWidth || 600;
+  const hauteur = toile.clientHeight || 110;
+  if (toile.width !== Math.round(largeur * ratio)) {
+    toile.width = Math.round(largeur * ratio);
+    toile.height = Math.round(hauteur * ratio);
+  }
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  ctx.clearRect(0, 0, largeur, hauteur);
+
+  const style = getComputedStyle(document.documentElement);
+  const lire = (nom, repli) => (style.getPropertyValue(nom) || repli).trim();
+  const trait = lire("--trait", "#ddd8cc");
+  const doux = lire("--doux", "#5d5a52");
+  const accent = lire("--accent", "#8a3324");
+
+  const notes = trace.filter((p) => p !== null);
+  if (notes.length < 2) {
+    ctx.fillStyle = doux;
+    ctx.font = '12px "IBM Plex Mono", monospace';
+    ctx.textAlign = "center";
+    ctx.fillText("your last ten seconds appear here", largeur / 2, hauteur / 2);
+    return;
+  }
+
+  const enMidi = (hz) => 69 + 12 * Math.log2(hz / laReference);
+  const midis = notes.map(enMidi);
+  let bas = Math.min(...midis);
+  let haut = Math.max(...midis);
+  const milieu = (bas + haut) / 2;
+  const etendue = Math.max(2, haut - bas + 1);
+  bas = milieu - etendue / 2;
+  haut = milieu + etendue / 2;
+
+  const y = (midi) => hauteur - ((midi - bas) / (haut - bas)) * hauteur;
+  const x = (i) => (i / (traceMaxPoints - 1)) * largeur;
+
+  // Les lignes de demi-ton, avec leur nom. C'est ce qui transforme une courbe
+  // en information musicale plutot qu'en decoration.
+  ctx.font = '10px "IBM Plex Mono", monospace';
+  ctx.textAlign = "left";
+  for (let m = Math.ceil(bas); m <= Math.floor(haut); m++) {
+    const ligne = y(m);
+    ctx.strokeStyle = trait;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, ligne + 0.5);
+    ctx.lineTo(largeur, ligne + 0.5);
+    ctx.stroke();
+    if (haut - bas <= 14) {
+      ctx.fillStyle = doux;
+      ctx.fillText(NOMS[systeme][((m % 12) + 12) % 12] + (Math.floor(m / 12) - 1), 3, ligne - 3);
+    }
+  }
+
+  // La courbe, interrompue a chaque trame muette.
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  let leve = true;
+  const depart = traceMaxPoints - trace.length;
+  trace.forEach((p, i) => {
+    if (p === null) { leve = true; return; }
+    const px = x(depart + i);
+    const py = y(enMidi(p));
+    if (leve) { ctx.moveTo(px, py); leve = false; } else { ctx.lineTo(px, py); }
+  });
+  ctx.stroke();
 }
 
 function elt(id) {
@@ -702,6 +812,7 @@ function surFenetre(echantillons) {
   const bonne = r.hz > HZ_MIN && r.hz < HZ_MAX && r.confiance >= CONFIANCE_MIN;
 
   if (!bonne) {
+    pousserTrace(null);
     if (++muettes >= PATIENCE) {
       dernieres.length = 0;
       afficherSilence();
@@ -716,7 +827,16 @@ function surFenetre(echantillons) {
   // trente cents dans le grave. Mesure dans `test-affinage.ts`.
   dernieres.push(affinerHauteur(echantillons, r.hz, contexte.sampleRate));
   if (dernieres.length > RETENUES) dernieres.shift();
-  afficher(mediane(dernieres));
+  const lisse = mediane(dernieres);
+  pousserTrace(lisse);
+  afficher(lisse);
+}
+
+/** Ajoute un point a la trace et la redessine. `null` pour une trame muette. */
+function pousserTrace(hz) {
+  trace.push(hz);
+  while (trace.length > traceMaxPoints) trace.shift();
+  dessinerTrace();
 }
 
 async function allumer() {
@@ -773,9 +893,17 @@ async function allumer() {
 
   contexte.createMediaStreamSource(flux).connect(noeud);
 
+  // Combien de trames tiennent dans la fenetre de la trace, DEDUIT de la
+  // frequence reelle du materiel et non suppose. Le meme piege que dans
+  // `micro-web.js`, une machine a 48 000 Hz ne rend pas des trames de la meme
+  // duree qu'une machine a 44 100.
+  traceMaxPoints = Math.round(TRACE_SECONDES / (TAILLE_FENETRE / contexte.sampleRate));
+  trace.length = 0;
+
   elt("mon-avant").hidden = true;
   elt("mon-pendant").hidden = false;
   afficherSilence();
+  dessinerTrace();
 }
 
 async function eteindre() {
@@ -788,6 +916,7 @@ async function eteindre() {
   }
   contexte = null;
   dernieres.length = 0;
+  trace.length = 0;
   elt("mon-pendant").hidden = true;
   elt("mon-avant").hidden = false;
   elt("mon-bouton").disabled = false;
@@ -797,14 +926,20 @@ async function eteindre() {
 function brancher() {
   elt("mon-bouton").addEventListener("click", allumer);
   elt("mon-stop").addEventListener("click", eteindre);
+  // Les deux reglages repeignent aussi la trace, dont les lignes de demi-ton et
+  // l'echelle dependent du nom des notes et du la de reference.
   elt("mon-systeme").addEventListener("change", (e) => {
     systeme = e.target.value;
     if (dernieres.length) afficher(mediane(dernieres));
+    dessinerTrace();
   });
   elt("mon-la").addEventListener("change", (e) => {
     laReference = Number(e.target.value);
     if (dernieres.length) afficher(mediane(dernieres));
+    dessinerTrace();
   });
+  // Une toile dessinee a une taille et affichee a une autre devient floue.
+  window.addEventListener("resize", dessinerTrace);
   // Le voyant du microphone doit s'eteindre quand on quitte la page, meme si
   // le visiteur ne clique jamais sur le bouton d'arret.
   window.addEventListener("pagehide", eteindre);
@@ -815,6 +950,15 @@ if (document.readyState === "loading") {
 } else {
   brancher();
 }
+
+/**
+ * UNE LUCARNE DE LECTURE SUR LA TRACE, comme `window.__steady` cote produit.
+ * Aucune donnee n en sort, elle sert au banc a regarder ce que la trace CONTIENT
+ * plutot qu a le deviner depuis ce qu elle DESSINE. Cette distinction m a coute
+ * vingt minutes le 2026-08-31, mon banc comptant les levers de crayon des
+ * lignes de portee comme des ruptures de la courbe.
+ */
+window.__trace = { lire: () => trace.slice(), plafond: () => traceMaxPoints };
 })();
 /* MONITEUR:FIN */
 </script>
