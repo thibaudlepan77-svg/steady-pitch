@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My pitch detector read every note sharp, and the cause was arithmetic</title>
+<meta name="description" content="A vocal pitch monitor that was sharp on every known frequency, 29.8 cents at 82 Hz. The cause was biased FFT autocorrelation inside YIN, not the audio. Measurements before and after the fix.">
+<link rel="canonical" href="https://thibaudlepan77-svg.github.io/steady-pitch/notes/pitch-detector-reads-sharp.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Steady Pitch">
+<meta property="og:title" content="My pitch detector read every note sharp, and the cause was arithmetic">
+<meta property="og:description" content="Sharp on every known frequency, 29.8 cents at 82 Hz. The cause was biased FFT autocorrelation inside YIN, not the audio.">
+<meta property="og:url" content="https://thibaudlepan77-svg.github.io/steady-pitch/notes/pitch-detector-reads-sharp.html">
+<meta property="og:image" content="https://thibaudlepan77-svg.github.io/steady-pitch/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://thibaudlepan77-svg.github.io/steady-pitch/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%238a3324%27%2F%3E%3Cpath%20d%3D%27M6%2021a10%2010%200%200%201%2020%200%27%20fill%3D%27none%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3Cpath%20d%3D%27M16%2021V9%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--fond:#fbfaf7;--encre:#1b1a17;--doux:#5d5a52;--trait:#ddd8cc;--accent:#8a3324;--carte:#fff;--surlign:#f3efe4}
+  @media (prefers-color-scheme:dark){
+    :root{--fond:#14150f;--encre:#eceadf;--doux:#a09c8f;--trait:#33342b;--accent:#e0876f;--carte:#1c1d16;--surlign:#23241b}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--fond);color:var(--encre)}
+  body{font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.6}
+  main{max-width:40rem;margin:0 auto;padding:2.4rem 1.4rem 5rem}
+  .fil{font-family:"IBM Plex Mono",monospace;font-size:.76rem;margin:0 0 1.6rem}
+  .fil a{color:var(--doux)}
+  h1{font-size:1.85rem;line-height:1.2;margin:0 0 .6rem;font-weight:700}
+  .chapeau{font-size:1.05rem;color:var(--doux);margin:0 0 2rem}
+  h2{font-size:1.05rem;margin:2.4rem 0 .5rem;font-weight:700;border-left:3px solid var(--accent);padding-left:.55rem}
+  p{margin:.8rem 0}
+  pre{font-family:"IBM Plex Mono",monospace;font-size:.79rem;background:var(--surlign);
+    border-radius:.35rem;padding:.9rem 1rem;overflow-x:auto;line-height:1.5}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:var(--surlign);
+    padding:.08em .3em;border-radius:.2rem}
+  pre code{background:none;padding:0}
+  .encart{border:1px solid var(--trait);background:var(--carte);border-radius:.4rem;
+    padding:1.1rem 1.2rem;margin:2rem 0}
+  .encart a{color:var(--accent)}
+  footer{margin-top:3rem;padding-top:.9rem;border-top:1px solid var(--trait);
+    font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--doux)}
+  footer a{color:var(--doux)}
+</style>
+</head>
+<body>
+<main>
+
+  <p class="fil"><a href="../">Steady Pitch</a> / notes</p>
+
+  <h1>My pitch detector read every note sharp, and the cause was arithmetic</h1>
+  <p class="chapeau">It was sharp on every frequency I knew the answer to. Never
+  flat, always sharp, which is the shape of a bug rather than the shape of
+  noise.</p>
+
+  <h2>The measurement</h2>
+  <p>I had been testing this thing with my own voice for weeks, which turns out
+  to be close to useless. A test that uses your voice cannot separate your error
+  from the tool's error. So I generated tones at frequencies I already knew and
+  asked it what it heard.</p>
+
+<pre>frequency      reported error
+82.41 Hz       29.8 cents sharp
+98 Hz          15.5 cents sharp
+130.81 Hz      9.1 cents sharp
+196 Hz         6.8 cents sharp
+261.63 Hz      6.2 cents sharp
+440 Hz         2.6 cents sharp
+880 Hz         2.1 cents sharp</pre>
+
+  <p>Thirty cents is about a third of a semitone. On a low E my own tool was
+  lying to anyone who checked it against a tuning fork, which is exactly what a
+  sceptical user does first.</p>
+
+  <p>Three things needed explaining. The sign never changed. The error grew as
+  the note got lower. And a pure sine was far worse than a voice, five to six
+  times worse at the same pitch.</p>
+
+  <h2>The cause</h2>
+  <p>It is a YIN detector. YIN builds a difference function over lag
+  <code>tau</code>.</p>
+
+<pre>d(tau) = sum over j of ( x[j] - x[j+tau] )^2</pre>
+
+  <p>Expanded, that is the power of the head window plus the power of the tail
+  window minus twice the autocorrelation at that lag. The usual fast
+  implementation computes the autocorrelation with an FFT and then takes a
+  shortcut, assuming both power terms equal <code>r0</code>, the autocorrelation
+  at lag zero.</p>
+
+<pre>d(tau) = 2*r0 - 2*acf[tau]</pre>
+
+  <p>That shortcut is the bug, and it has nothing to do with sound.</p>
+
+  <p><strong>FFT autocorrelation is biased.</strong> At lag <code>tau</code>
+  only <code>N - tau</code> sample pairs actually overlap, but the result is
+  still divided by <code>N</code>. So <code>acf[tau]</code> slopes downward as
+  the lag grows, purely as an artefact of counting. Feed it a perfectly periodic
+  signal and it still decays.</p>
+
+  <p>Put that decaying autocorrelation into the shortcut and the difference is
+  inflated more and more at long lags. The minimum slides toward shorter lags.
+  A shorter lag means a higher frequency. Every reading comes out sharp.</p>
+
+  <p>All three symptoms follow from that one cause. The bias only pushes one
+  way, so the sign is constant. A low note means a long period means a large
+  lag, where the taper is worst, so the error grows in the bass. And a pure sine
+  gives a wide shallow minimum with nothing to anchor it, while a harmonically
+  rich voice gives a sharp narrow one that resists being dragged, which is why
+  my worst case was a sine and not a singer.</p>
+
+  <h2>The fix</h2>
+  <p>Do not try to correct the autocorrelation. Recompute the difference
+  honestly, over a window of constant length, on a handful of lags around the
+  first estimate.</p>
+
+<pre><code>const largeur = n &gt;&gt; 1;               // same count for every lag
+for (let tau = tauMin; tau &lt;= tauMax; tau++) {
+  let somme = 0;
+  for (let j = 0; j &lt; largeur; j++) {
+    const ecart = buf[j] - buf[j + tau];
+    somme += ecart * ecart;
+  }
+  d[tau - tauMin] = somme;
+}</code></pre>
+
+  <p>Constant length is the whole point. Every lag is judged on exactly the same
+  number of terms, so the counting artefact cannot exist. Take the local minimum
+  and interpolate parabolically. It costs one narrow pass over half the buffer,
+  which is nothing next to the FFT you have already run.</p>
+
+  <p>Same table afterwards, every case at 0.0 cents, on pure sines and on
+  harmonically rich tones alike, at both 44 100 and 48 000 Hz.</p>
+
+  <h2>I got the fix wrong first, and that part is worth more</h2>
+  <p>My first version searched three samples either side of the first estimate.
+  It changed nothing at 82 Hz. A gain of exactly zero, on the one case it was
+  written for.</p>
+
+  <p>A thirty cent error is about nine samples on a low E and less than one
+  sample on a high A. So a fixed search width in samples missed precisely the
+  cases that needed it and helped only the cases that did not. The width had to
+  be a fraction of the period.</p>
+
+<pre><code>const rayon = Math.max(3, Math.round(tauCentre * 0.04));</code></pre>
+
+  <p><strong>When the size of a defect scales with something, the fix has to
+  scale with the same thing.</strong> A constant put up against a proportional
+  defect works at exactly one point on the scale.</p>
+
+  <p>One more thing saved me. The search returns the original estimate untouched
+  if the minimum lands on the edge of the bracket, rather than interpolating
+  against a missing neighbour. That guard is why the failure showed up as no
+  change instead of as a plausible wrong number. A guard that hands back its
+  input when it is unsure is worth more than one that always produces an
+  answer.</p>
+
+  <h2>Two things to check in any pitch detector</h2>
+  <p><strong>Feed it a frequency you already know.</strong> Not your voice.
+  Sixteen synthetic tones found a bug that weeks of singing at it did not.</p>
+
+  <p><strong>Feed it a pure sine in the bass.</strong> It is the least forgiving
+  input for autocorrelation methods, and it is also the first thing a sceptical
+  user reaches for.</p>
+
+  <p>And keep two kinds of test apart. I have a bench that compares this port to
+  its reference implementation to within a ten thousandth of a cent, and it
+  stayed green through all of this, because both sides were wrong in the same
+  way. A fidelity test tells you that you copied correctly. Only a known
+  frequency tells you that you are right.</p>
+
+  <div class="encart">
+    <p style="margin-top:0"><strong>The tool this came from.</strong> A vocal
+    pitch monitor that runs in a browser tab. Press a button, sing, and it names
+    the note and shows how many cents sharp or flat you are. No account, nothing
+    to install, and nothing you sing leaves your machine.</p>
+    <p style="margin-bottom:0"><a href="../">Open it on the front page</a>, or
+    go straight to <a href="../app.html">the trainer</a>.</p>
+  </div>
+
+  <footer>
+    Steady Pitch, by Thibaud Lepan.
+    Questions and bug reports, thibaudlepanpro@gmail.com.
+  </footer>
+
+</main>
+</body>
+</html>
