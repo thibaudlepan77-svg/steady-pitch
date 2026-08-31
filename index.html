@@ -488,10 +488,22 @@ function yinDetect(
  * exactement le meme nombre de termes.
  */
 
-/** Combien d'ecarts d'echantillon on explore de part et d'autre. Trois suffit,
- *  le biais mesure ne depasse jamais deux ecarts, et chercher plus loin
- *  risquerait de tomber dans le lobe du voisin. */
-const AFFINAGE_RAYON = 3;
+/**
+ * Le rayon de recherche, en PART DE LA PERIODE et non en echantillons.
+ *
+ * PREMIERE VERSION, TROIS ECHANTILLONS, ET SON ECHEC MESURE. Le biais a
+ * corriger vaut jusqu'a trente cents, ce qui fait NEUF echantillons sur un mi
+ * grave et moins d'un sur un la aigu. Un rayon fixe rate donc exactement les
+ * cas pour lesquels il a ete ecrit, et le banc l'a montre, la sinusoide a
+ * 82 Hz ressortait inchangee.
+ *
+ * Quatre pour cent de la periode couvrent soixante-dix cents de part et
+ * d'autre, largement de quoi rattraper le pire biais mesure. Et cela reste
+ * loin du minimum concurrent le plus proche, qui est a la moitie ou au double
+ * de la periode, donc l'affinage ne peut pas changer de note en chemin.
+ */
+const AFFINAGE_PART = 0.04;
+const AFFINAGE_RAYON_MIN = 3;
 
 /**
  * Affine une hauteur deja trouvee. Rend la hauteur affinee, ou la hauteur
@@ -509,8 +521,9 @@ function affinerHauteur(
   // La fenetre de comparaison. Constante pour tous les tau, c'est tout
   // l'objet de cette fonction.
   const largeur = n >> 1;
-  const tauMin = Math.max(1, Math.floor(tauCentre) - AFFINAGE_RAYON);
-  const tauMax = Math.min(n - largeur, Math.ceil(tauCentre) + AFFINAGE_RAYON);
+  const rayon = Math.max(AFFINAGE_RAYON_MIN, Math.round(tauCentre * AFFINAGE_PART));
+  const tauMin = Math.max(1, Math.floor(tauCentre) - rayon);
+  const tauMax = Math.min(n - largeur, Math.ceil(tauCentre) + rayon);
   if (tauMax - tauMin < 2) return hz;
 
   const d = new Float64Array(tauMax - tauMin + 1);
