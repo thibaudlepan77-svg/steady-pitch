@@ -28,13 +28,25 @@ const EXCLUES = /^google[0-9a-f]+\.html$/;
 function priorite(chemin) {
   if (chemin === "") return "1.0";
   if (chemin === "vocal-range-test.html") return "0.9";
+  if (chemin === "vocal-range-chart.html") return "0.9";
   if (chemin.endsWith("-vocal-range-test.html")) return "0.8";
   if (chemin === "app.html") return "0.8";
   if (chemin.startsWith("notes/")) return "0.6";
   return "0.5";
 }
 
-const jour = (chemin) => statSync(join(SITE, chemin)).mtime.toISOString().slice(0, 10);
+/**
+ * La date en heure LOCALE, et non `toISOString`. Ecrire ce script apres minuit
+ * m'a rendu un plan date de la veille, parce que la conversion en UTC recule
+ * d'une heure ou deux ici. Un jour d'ecart ne casse rien chez le robot, mais un
+ * fichier qui se contredit avec l'horloge de la machine est un fichier auquel
+ * on cesse de se fier.
+ */
+function jour(chemin) {
+  const date = statSync(join(SITE, chemin)).mtime;
+  const deuxChiffres = (n) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${deuxChiffres(date.getMonth() + 1)}-${deuxChiffres(date.getDate())}`;
+}
 
 const pages = [];
 

@@ -25,41 +25,16 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join, resolve } from "node:path";
+import {
+  SITE, RACINE, STYLE, TEST, CODE, ICONE, BEACON, ID_DU_TEST, nommer,
+  plaintesDuDecoupage,
+} from "./tranches.mjs";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
-const SITE = resolve(ICI, "..", "pages-steady-pitch");
-const MODELE = join(SITE, "vocal-range-test.html");
-const RACINE = "https://thibaudlepan77-svg.github.io/steady-pitch/";
 
 let fautes = 0;
 const gronder = (m) => { console.log("  " + m); fautes++; };
-
-// ---------------------------------------------------------------------------
-// 1. LES TRANCHES REPRISES AU MODELE
-// ---------------------------------------------------------------------------
-
-const modele = readFileSync(MODELE, "utf-8");
-
-/** Decoupe entre deux reperes, la fin comprise ou non selon `garderFin`. */
-function tranche(depuis, jusqu, garderFin) {
-  const i = modele.indexOf(depuis);
-  const j = modele.indexOf(jusqu, i + depuis.length);
-  if (i < 0 || j < 0) {
-    gronder(`FAUTE, repere introuvable dans le modele, ${depuis.slice(0, 40)}`);
-    return "";
-  }
-  return modele.slice(i, garderFin ? j + jusqu.length : j);
-}
-
-const STYLE = tranche('<link rel="preconnect" href="https://fonts.googleapis.com">', "</style>", true);
-const TEST = tranche('<div class="test">', '<p><a class="lancer" href="./">Open the live pitch monitor', false);
-const CODE = tranche("<script>\n/* TESSITURE:DEBUT */", "/* TESSITURE:FIN */\n</script>", true);
-const ICONE = tranche('<link rel="icon" href="data:image/svg+xml', ">", true);
-const BEACON = tranche("<!-- Cloudflare Web Analytics -->", "<!-- End Cloudflare Web Analytics -->", true);
-
-if (CODE.length < 50000) gronder(`FAUTE, le code injecte fait ${CODE.length} octets, c'est trop peu`);
-if (!CODE.includes("function analyserBalayage")) gronder("FAUTE, analyserBalayage absent du code repris");
-if (!CODE.includes("function composerEtendue")) gronder("FAUTE, composerEtendue absent du code repris");
+for (const plainte of plaintesDuDecoupage()) gronder(`FAUTE, ${plainte}`);
 
 // ---------------------------------------------------------------------------
 // 2. LES SIX TYPES
@@ -395,7 +370,9 @@ function pied(courant) {
   <p>Each one has its own page, with the same test and the reference range for
   that type. ${autres}. If you would rather not pick a type first, the
   <a href="./vocal-range-test.html">general vocal range test</a> measures your
-  voice and names the closest of the six for you.</p>
+  voice and names the closest of the six for you, and the
+  <a href="./vocal-range-chart.html">vocal range chart</a> shows all six drawn on
+  one axis before you sing a note.</p>
 
   <footer>
     Steady Pitch, by Thibaud Lepan.
@@ -415,9 +392,6 @@ function pied(courant) {
 // l'argument de vente est la justesse.
 // ---------------------------------------------------------------------------
 
-const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
-const nommer = (midi) => NOTES[midi % 12] + (Math.floor(midi / 12) - 1);
-
 const noyau = readFileSync(resolve(ICI, "..", "noyau-justesse", "tessiture.ts"), "utf-8");
 for (const type of TYPES) {
   const ligne = new RegExp(
@@ -436,8 +410,6 @@ for (const type of TYPES) {
 // ---------------------------------------------------------------------------
 // 5. LA COMPOSITION
 // ---------------------------------------------------------------------------
-
-const ID_ATTENDUS = [...new Set([...TEST.matchAll(/id="([^"]+)"/g)].map((m) => m[1]))];
 
 function composer(type) {
   const url = RACINE + type.fichier;
@@ -497,7 +469,7 @@ ${BEACON}
 const pages = TYPES.map((type) => [type, composer(type)]);
 
 for (const [type, page] of pages) {
-  const manquants = ID_ATTENDUS.filter((id) => !page.includes(`id="${id}"`));
+  const manquants = ID_DU_TEST.filter((id) => !page.includes(`id="${id}"`));
   if (manquants.length) gronder(`FAUTE, ${type.fichier} ne porte pas ${manquants.join(", ")}`);
   if (!page.includes("/* TESSITURE:DEBUT */")) gronder(`FAUTE, ${type.fichier} n'a pas recu le code`);
   for (const balise of ["<title>", "</html>", "</main>"]) {
@@ -566,4 +538,4 @@ for (const [type, page] of pages) {
   console.log(`  ${type.fichier.padEnd(38)} ${String(page.length).padStart(7)} o, ${mots} mots distincts`);
 }
 console.log(`  bornes confrontees a tessiture.ts, ${TYPES.length} types, aucun ecart`);
-console.log(`  ${ID_ATTENDUS.length} identifiants du test, presents sur les six`);
+console.log(`  ${ID_DU_TEST.length} identifiants du test, presents sur les six`);
