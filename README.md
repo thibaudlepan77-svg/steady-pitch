@@ -6,6 +6,11 @@ works offline, needs no account, and never uploads audio.
 
 Live page, https://thibaudlepan77-svg.github.io/steady-pitch/
 
+Vocal range test,
+https://thibaudlepan77-svg.github.io/steady-pitch/vocal-range-test.html
+Two sweeps, about two minutes, and it names both ends of your range, its width
+in octaves and the voice type it sits closest to.
+
 ## Why it exists
 
 Most tuners on a phone store install free and then charge to unlock the range
@@ -59,28 +64,39 @@ node test-justesse.js
 ```
 
 Error in cents, signed. Positive means it reports you sharper than you are.
+The `raw` column is what YIN returns on its own. The `shipped` column is what
+the product puts on screen, after the refinement pass, and it is the only one
+that describes what you will see.
 
-    note   Hz        harmonic-rich   pure sine
-    C2     65.41         +5.3          +23.8
-    E2     82.41         +2.4          +29.8
-    G2     98.00         +1.6          +15.5
-    A2    110.00         +4.7          +13.1
-    C3    130.81         +4.0           +9.1
-    A3    220.00         +0.7           +8.9
-    A4    440.00         +0.4           +2.6
-    A5    880.00         +0.7           +2.1
+    note   Hz          harmonic-rich          pure sine
+                     raw    shipped         raw    shipped
+    C2     65.41     +5.3      -0.0        +23.8      -0.0
+    E2     82.41     +2.4      -0.0        +29.8      -0.0
+    G2     98.00     +1.6      -0.0        +15.5      -0.0
+    A2    110.00     +4.7      -0.0        +13.1      -0.0
+    C3    130.81     +4.0      -0.0         +9.1      -0.0
+    A3    220.00     +0.7      -0.0         +8.9      -0.0
+    A4    440.00     +0.4      -0.0         +2.6      -0.0
+    A5    880.00     +0.7      -0.0         +2.1      +0.0
 
 The harmonic-rich column is a voice or an instrument, with the fundamental
 deliberately weaker than the second harmonic, which is the case that makes a
-naive detector jump an octave. It never does here, and it stays under six cents
-across the whole range.
+naive detector jump an octave. It never does here.
 
-The pure sine column is the honest bad news. A sine has no upper partials to
-constrain the lag estimate, and at 82 Hz a 2048 sample window holds barely two
-periods inside the search range, so the reading drifts sharp by up to thirty
-cents. If you test this with a tone generator rather than a voice, that is what
-you will see, and it is a property of the window rather than a bug you can
-report.
+The pure sine used to be the honest bad news, and the earlier version of this
+file said so. A sine has no upper partials to constrain the lag estimate, and
+at 82 Hz a 2048 sample window holds barely two periods inside the search range,
+so the raw reading drifts sharp by thirty cents. That is still true of the raw
+detector, and it is why the column is kept.
+
+It is not what the product does. The cause turned out to be arithmetic rather
+than audio. The FFT autocorrelation sums only the samples that overlap at each
+lag but divides by the whole window anyway, so it decays for a reason that has
+nothing to do with the sound, and the minimum slides toward short lags, which
+are high frequencies. A separate pass recomputes the difference over a window
+of constant length, and the thirty cents become nothing. The write-up with the
+before and after is at
+https://thibaudlepan77-svg.github.io/steady-pitch/notes/pitch-detector-reads-sharp.html
 
 At the edges it stays quiet rather than guessing. Below the 65.41 Hz floor, on
 silence, and on white noise, it returns no note at all.
@@ -99,10 +115,11 @@ Then open `app.html` in a browser with Web Audio support.
 
 ## Layout
 
-    index.html         the landing page
-    app.html           the tool, one file, no imports
-    test-justesse.js   accuracy measurement, plain node
-    og.png             share card
+    index.html             the landing page, with the live monitor in it
+    vocal-range-test.html  the range test, one file, no imports
+    app.html               the trainer, one file, no imports
+    test-justesse.js       accuracy measurement, plain node
+    og.png                 share card
 
 Identifiers and comments in `app.html` are in French.
 

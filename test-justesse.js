@@ -54,17 +54,31 @@ function verifier(condition, message) {
 }
 
 console.log(`Fenetre ${FENETRE} echantillons a ${SR} Hz, plancher declare ${pitch.YIN_FREQ_MIN} Hz\n`);
-console.log('note  Hz       harmoniques     sinus pur');
+// CE QUE CE TABLEAU MESURE, ET IL A CHANGE LE 2026-09-03.
+// Il ne montrait que le detecteur brut. Or le produit ne sert JAMAIS ce
+// nombre-la, il passe chaque lecture par `affinerHauteur` avant de l'afficher.
+// Le tableau publie decrivait donc un composant que personne n'utilise, et il
+// annoncait trente cents d'erreur sur un cas ou le produit livre en fait moins
+// d'un cent. Une mesure exacte sur le mauvais objet reste une mesure fausse.
+console.log('note  Hz          harmoniques              sinus pur');
+console.log('                brut     livre          brut     livre');
+
+const livre = (buf, brutHz) => (brutHz > 0 ? pitch.affinerHauteur(buf, brutHz, SR) : brutHz);
 
 for (const [nom, hz] of NOTES) {
-  const riche = pitch.yinDetect(signal(hz, VOIX_GRAVE), SR);
-  const pur = pitch.yinDetect(signal(hz, SINUS_PUR), SR);
+  const bufRiche = signal(hz, VOIX_GRAVE);
+  const bufPur = signal(hz, SINUS_PUR);
+  const riche = pitch.yinDetect(bufRiche, SR);
+  const pur = pitch.yinDetect(bufPur, SR);
   const ecartRiche = cents(riche.hz, hz);
   const ecartPur = cents(pur.hz, hz);
-  const signe = (x) => ((x >= 0 ? '+' : '') + x.toFixed(1) + ' cents');
+  const ecartRicheLivre = cents(livre(bufRiche, riche.hz), hz);
+  const ecartPurLivre = cents(livre(bufPur, pur.hz), hz);
+  const signe = (x) => ((x >= 0 ? '+' : '') + x.toFixed(1));
   console.log(
     nom.padEnd(6) + String(hz).padEnd(9) +
-    signe(ecartRiche).padStart(11) + signe(ecartPur).padStart(14)
+    signe(ecartRiche).padStart(7) + signe(ecartRicheLivre).padStart(10) +
+    signe(ecartPur).padStart(14) + signe(ecartPurLivre).padStart(10)
   );
 
   // Sur un son reel, on veut mieux que six cents, ce qui est sous le seuil
@@ -72,6 +86,12 @@ for (const [nom, hz] of NOTES) {
   verifier(Math.abs(ecartRiche) < 6, `${nom} riche en harmoniques, ${ecartRiche.toFixed(1)} cents`);
   // Et surtout, jamais l'octave au-dessus, meme quand la fondamentale est faible.
   verifier(Math.abs(ecartRiche - 1200) > 100, `${nom} rendu une octave trop haut`);
+  // Ce que le produit affiche vraiment. Un cent est le dixieme de ce qu'une
+  // oreille entrainee distingue, et c'est la colonne qui engage ma page de vente.
+  verifier(Math.abs(ecartRicheLivre) < 1,
+    `${nom} livre, harmoniques, ${ecartRicheLivre.toFixed(2)} cents`);
+  verifier(Math.abs(ecartPurLivre) < 1,
+    `${nom} livre, sinus pur, ${ecartPurLivre.toFixed(2)} cents`);
 }
 
 console.log('\nBords');
