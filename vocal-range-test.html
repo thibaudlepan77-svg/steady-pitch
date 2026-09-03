@@ -1382,9 +1382,10 @@ const REGLAGES_TESSITURE                    = {
                   
                                                                               
                      
-                                                                 
+                                                                     
+                                                                  
                   
-                                                                   
+                                                                        
                         
  
 
@@ -1416,26 +1417,109 @@ function medianeDe(xs          )         {
 }
 
 /**
- * Replie une hauteur d'une ou deux octaves quand l'ecart au voisin ressemble a
- * l'erreur d'octave du detecteur. Rend la hauteur d'origine si l'ecart ne
- * ressemble a rien de connu.
+ * LE REPLI D'OCTAVE EST UN PIEGE, ET IL M'A PRIS AU PREMIER ESSAI EN
+ * NAVIGATEUR. Voici la faute exacte, parce qu'elle est instructive.
+ *
+ * Ma premiere version repliait chaque trame sur la PRECEDENTE. Une seule trame
+ * fausse au debut d'un balayage devenait alors une ancre, et les cinquante-huit
+ * trames suivantes, parfaitement justes, etaient repliees sur elle une par une.
+ * Le banc en navigateur a lu un la 4 tenu deux secondes et a rendu un la 2.
+ * Le repli n'etait pas une correction, c'etait un cliquet.
+ *
+ * ET CE N'ETAIT PAS UN ARTEFACT DE BANC. Une chanteuse qui bascule en voix de
+ * tete au sommet de son balayage monte d'une octave POUR DE VRAI. Ma premiere
+ * version lui aurait efface tout son aigu, silencieusement, et c'est justement
+ * la note qu'elle venait chercher.
+ *
+ * CE QUI SEPARE VRAIMENT UN GLISSEMENT DU DETECTEUR D'UNE OCTAVE CHANTEE, ce
+ * n'est ni la duree ni le sens, c'est LE RETOUR. Quand le detecteur glisse, la
+ * lecture revient ensuite d'ou elle venait, la faute est prise en sandwich.
+ * Quand la voix saute, elle reste. On ne replie donc que ce qui est encadre,
+ * et on scanne pour le savoir, ce qui est possible parce que l'analyse voit
+ * tout le balayage a la fois.
  */
-function replierSurVoisin(hz        , voisinHz        , tolerance        )         {
-  const ecart = cents(hz, voisinHz);
+
+/** Un palier de lecture, des trames voisines qui tiennent la meme hauteur. */
+                  
+                    
+                                                                          
+                                                                               
+                                                                   
+                        
+                  
+ 
+
+/** Nombre d'octaves qui explique l'ecart, ou zero quand rien ne l'explique. */
+function octavesDEcart(ecartCents        , tolerance        )         {
   for (const octaves of [1, -1, 2, -2]) {
-    if (Math.abs(ecart - octaves * 1200) <= tolerance) {
-      return hz / Math.pow(2, octaves);
-    }
+    if (Math.abs(ecartCents - octaves * 1200) <= tolerance) return octaves;
   }
-  return hz;
+  return 0;
+}
+
+/** Decoupe le balayage en paliers, en comptant au passage ce qui est jete. */
+function decouperEnPaliers(
+  trames                  ,
+  reglages                   ,
+  rejets                ,
+)                                               {
+  const paliers           = [];
+  let butoirMoteur = false;
+  let courant                = null;
+  let coupureEnAttente = true;
+
+  const fermer = () => {
+    if (courant) {
+      courant.mediane = medianeDe(courant.valeurs);
+      paliers.push(courant);
+      courant = null;
+    }
+  };
+
+  for (const trame of trames) {
+    if (!(trame.hz > 0) || trame.confiance < reglages.confianceMin) {
+      rejets.silence++;
+      fermer();
+      coupureEnAttente = true;
+      continue;
+    }
+    if (trame.hz < reglages.moteurHzMin || trame.hz > reglages.moteurHzMax) {
+      rejets.horsMoteur++;
+      butoirMoteur = true;
+      fermer();
+      coupureEnAttente = true;
+      continue;
+    }
+
+    if (courant) {
+      const min = Math.min(courant.valeurs[0], trame.hz);
+      const max = Math.max(courant.valeurs[0], trame.hz);
+      // Le palier se mesure a sa PREMIERE valeur et non a ses extremes, sinon
+      // un glissando lent glisserait de proche en proche sans jamais fermer un
+      // palier, et le decoupage ne decouperait rien.
+      const etale = cents(max, min) > reglages.etalementTenueCents;
+      const saute = Math.abs(cents(trame.hz, courant.valeurs[courant.valeurs.length - 1]))
+        > reglages.sautMaxCents;
+      if (etale || saute) fermer();
+    }
+
+    if (!courant) {
+      courant = { valeurs: [], apresCoupure: coupureEnAttente, mediane: 0 };
+      coupureEnAttente = false;
+    }
+    courant.valeurs.push(trame.hz);
+  }
+  fermer();
+
+  return { paliers, butoirMoteur };
 }
 
 /**
  * Analyse un balayage et rend l'extreme TENU dans le sens demande.
  *
- * On ne coupe pas la tenue sur une rupture, on en ouvre une nouvelle. Une
- * respiration au milieu d'un glissando est normale, et couper la la mesure
- * jetterait tout ce qui vient apres, c'est-a-dire souvent le plus interessant.
+ * Un saut ne coupe pas la mesure, il ouvre un palier. Une respiration au
+ * milieu d'un glissando est normale, et s'arreter la jetterait tout ce qui
+ * suit, c'est-a-dire souvent la note qu'on cherchait.
  */
 function analyserBalayage(
   trames                  ,
@@ -1443,78 +1527,40 @@ function analyserBalayage(
   reglages                    = REGLAGES_TESSITURE,
 )                   {
   const rejets                 = { silence: 0, horsMoteur: 0, rupture: 0, octaveRepliee: 0 };
-  const tenues          = [];
-  let butoirMoteur = false;
-  let tramesRetenues = 0;
+  const { paliers, butoirMoteur } = decouperEnPaliers(trames, reglages, rejets);
 
-  let courante           = [];
-  let minCourant = 0;
-  let maxCourant = 0;
-  let precedentHz = 0;
+  // LE REPLI, PALIER PAR PALIER, ET SEULEMENT QUAND IL EST ENCADRE.
+  for (let k = 1; k < paliers.length; k++) {
+    const palier = paliers[k];
+    if (palier.apresCoupure) continue;
 
-  const fermer = () => {
-    if (courante.length >= reglages.tramesTenue) {
-      tenues.push({ midi: medianeDe(courante.map(hzVersMidi)), trames: courante.length });
-    }
-    courante = [];
-  };
+    const ancre = paliers[k - 1].mediane;
+    const ecart = cents(palier.mediane, ancre);
+    if (Math.abs(ecart) <= reglages.sautMaxCents) continue;
 
-  const empiler = (hz        ) => {
-    if (!courante.length) {
-      minCourant = hz;
-      maxCourant = hz;
+    const octaves = octavesDEcart(ecart, reglages.toleranceOctaveCents);
+    const suivant = paliers[k + 1];
+    const revient = octaves !== 0 && suivant !== undefined && !suivant.apresCoupure
+      && Math.abs(cents(suivant.mediane, ancre)) <= reglages.etalementTenueCents;
+
+    if (revient) {
+      const facteur = Math.pow(2, octaves);
+      palier.valeurs = palier.valeurs.map((hz) => hz / facteur);
+      palier.mediane = palier.mediane / facteur;
+      rejets.octaveRepliee += palier.valeurs.length;
     } else {
-      if (hz < minCourant) minCourant = hz;
-      if (hz > maxCourant) maxCourant = hz;
+      rejets.rupture++;
     }
-    courante.push(hz);
-  };
-
-  for (const trame of trames) {
-    if (!(trame.hz > 0) || trame.confiance < reglages.confianceMin) {
-      rejets.silence++;
-      fermer();
-      precedentHz = 0;
-      continue;
-    }
-
-    if (trame.hz < reglages.moteurHzMin || trame.hz > reglages.moteurHzMax) {
-      rejets.horsMoteur++;
-      butoirMoteur = true;
-      fermer();
-      precedentHz = 0;
-      continue;
-    }
-
-    let hz = trame.hz;
-    if (precedentHz > 0) {
-      const brut = cents(hz, precedentHz);
-      if (Math.abs(brut) > reglages.sautMaxCents) {
-        const replie = replierSurVoisin(hz, precedentHz, reglages.toleranceOctaveCents);
-        if (replie !== hz) {
-          rejets.octaveRepliee++;
-          hz = replie;
-        } else {
-          rejets.rupture++;
-          fermer();
-        }
-      }
-    }
-
-    // La tenue ne survit pas a un ecart de plus d'un etalement avec l'une de
-    // ses propres trames. On la ferme et la trame courante en ouvre une autre,
-    // c'est ce qui decoupe naturellement un glissando en paliers.
-    if (courante.length) {
-      const min = Math.min(minCourant, hz);
-      const max = Math.max(maxCourant, hz);
-      if (cents(max, min) > reglages.etalementTenueCents) fermer();
-    }
-
-    empiler(hz);
-    tramesRetenues++;
-    precedentHz = hz;
   }
-  fermer();
+
+  const tenues          = [];
+  let tramesRetenues = 0;
+  for (const palier of paliers) {
+    tramesRetenues += palier.valeurs.length;
+    if (palier.valeurs.length >= reglages.tramesTenue) {
+      tenues.push({ midi: hzVersMidi(palier.mediane), trames: palier.valeurs.length });
+    }
+  }
 
   let extremeMidi                = null;
   for (const tenue of tenues) {
