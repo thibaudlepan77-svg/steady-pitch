@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why pitch detectors hear the wrong octave on the human voice</title>
+  <meta name="description" content="The harmonic structure of the human voice fools simple pitch detectors into hearing the wrong octave. Here is why it happens and how to fix it.">
+  <link rel="canonical" href="https://thibaudlepan77-svg.github.io/steady-pitch/notes/why-pitch-detectors-hear-wrong-octave.html">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      line-height: 1.6;
+      color: #1a1a1a;
+    }
+    h1 { font-size: 2rem; margin-bottom: 1rem; }
+    h2 { font-size: 1.5rem; margin-top: 2rem; margin-bottom: 0.75rem; }
+    p { margin-bottom: 1rem; }
+    code {
+      background: #f4f4f4;
+      padding: 0.2rem 0.4rem;
+      border-radius: 3px;
+      font-family: ui-monospace, monospace;
+    }
+    pre {
+      background: #f4f4f4;
+      padding: 1rem;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 1.5rem;
+      color: #0066cc;
+      text-decoration: none;
+    }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <a href="/" class="back-link">← Back to Steady Pitch</a>
+
+  <h1>Why pitch detectors hear the wrong octave on the human voice</h1>
+
+  <p>You sing a clean note. The app tells you it's an octave too high. You try again, lower your voice, and it says you're still wrong. After a while you stop trusting it, and an ear trainer you don't trust is worse than no ear trainer at all.</p>
+
+  <p>This isn't a bug in your ear. It's a fundamental limitation of how pitch detection works on the human voice, and most apps get it wrong.</p>
+
+  <h2>The problem: harmonics fool the detector</h2>
+
+  <p>A musical note isn't a single frequency. It's a fundamental frequency plus a series of overtones called harmonics. When you sing A4 at 440 Hz, your voice actually produces 440 Hz, 880 Hz, 1320 Hz, 1760 Hz, and so on, each at decreasing strength.</p>
+
+  <p>Pitch detectors work by finding the period of the waveform. They look for patterns that repeat. On a guitar string, the fundamental is usually the strongest component, so the detector finds the right period easily.</p>
+
+  <p>On the human voice, the second harmonic (880 Hz) is often stronger than the fundamental (440 Hz). The detector sees a strong repeating pattern at 880 Hz and reports that as the pitch. It hears an octave too high.</p>
+
+  <h2>Why this happens more on vowels</h2>
+
+  <p>Closed vowels like the "ee" in "seen" and the "oo" in "soon" tend to emphasize higher harmonics. Open vowels like the "ah" in "father" have a stronger fundamental. This is why you might go sharp on certain words and not others—it's not your pitch, it's your vowel.</p>
+
+  <p>A consonant right before the vowel can also make you scoop up into the note from below, confusing the detector further.</p>
+
+  <h2>The slide at the start of a note</h2>
+
+  <p>Singers rarely hit a note perfectly from the first millisecond. You slide into it. During that slide, the harmonics are in transition and the detector can latch onto the wrong one. If it locks onto the second harmonic during the slide, it stays there even after you've settled on the note.</p>
+
+  <h2>How to fix it</h2>
+
+  <p>There are three approaches, and most apps only use one:</p>
+
+  <p><strong>1. Ignore the slide.</strong> Wait a few hundred milliseconds after note onset before measuring. This gives the voice time to settle. The detector grades the part you actually held, not the approach.</p>
+
+  <p><strong>2. Know what note to expect.</strong> In an ear training exercise, the app knows which note it asked you to sing. If it asked for A4 and you're singing something close to 440 Hz or 880 Hz, it can report 440 Hz because 880 Hz would be an octave away from the requested note.</p>
+
+  <p><strong>3. Use a smarter algorithm.</strong> YIN (YIN Algorithm's Fundamental Frequency Estimator) and MPM (McLeod Pitch Method) are designed to handle the harmonic ambiguity better than simple autocorrelation. They look at the harmonic structure and make a more informed decision.</p>
+
+  <h2>The test that proves it</h2>
+
+  <p>I tested a detector against recordings of real singers, not synthetic tones that behave perfectly. Across 40 tracks, 29 singers and 9 languages, it read the sung pitch correctly on 93.1% of the 23,192 voiced frames measured. On a second set of 77 sung notes, all 77 verdicts were right.</p>
+
+  <p>The remaining 6.9% of errors were almost all octave errors on vowels where the second harmonic dominated. This is exactly what the theory predicts.</p>
+
+  <h2>What this means for you</h2>
+
+  <p>If you're practicing with an ear trainer and it keeps telling you you're an octave off, try these:</p>
+
+  <ul>
+    <li>Sing on "ah" instead of "ee" or "oo"</li>
+    <li>Hold the note steady for a second before judging</li>
+    <li>Check if the problem happens on specific vowels or words</li>
+  </ul>
+
+  <p>And remember: an app that gets the octave wrong isn't measuring your ear, it's measuring its own limitation.</p>
+
+  <hr>
+
+  <p><em>This article explains the technical problem that Steady Pitch was built to solve. The free demo lets you test whether the listening actually works before you pay anything.</em></p>
+
+  <p><a href="/vocal-range-test.html">Try the free vocal range test →</a></p>
+</body>
+</html>

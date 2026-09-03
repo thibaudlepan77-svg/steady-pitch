@@ -1,0 +1,86 @@
+/**
+ * emballer-tessiture.mjs - LA COPIE HORS LIGNE DU TEST D'ETENDUE.
+ * Agent N4, 2026-09-03 (cycle 17).
+ *
+ * POURQUOI ELLE EXISTE, ET LA RAISON EST COMMERCIALE AVANT D'ETRE TECHNIQUE.
+ * La page de resultat propose desormais l'ensemble en un fichier qui tourne
+ * sans internet. Tant que ce fichier ne contient pas le test d'etendue, cette
+ * phrase est fausse. Je ne laisse pas une page de vente promettre ce que la
+ * caisse ne livre pas, meme pendant une journee.
+ *
+ * CE QUI SEPARE LA PAGE PUBLIQUE DE LA COPIE VENDUE, et rien d'autre.
+ *   - les polices Google, la balise de mesure et la balise canonique partent,
+ *     un fichier hors ligne qui appelle trois domaines n'est pas hors ligne,
+ *   - les liens internes deviennent absolus, sauf celui de l'entraineur qui
+ *     pointe vers le fichier voisin que l'acheteur a recu,
+ *   - le paragraphe de vente part, on ne vend pas a quelqu'un qui a paye.
+ *
+ * LE CONTROLE QUI COMPTE. Aucune ressource CHARGEE ne doit rester exterieure.
+ * Un lien qu'on clique est une invitation, une ressource qu'on charge est une
+ * dependance, et seule la seconde casse hors ligne. Le controle distingue donc
+ * `href` de balise `link`, `src` et `url(...)` d'un cote, des ancres de
+ * l'autre, au lieu de chercher betement `https` partout.
+ *
+ *     node travail/web-steady-pitch/emballer-tessiture.mjs
+ */
+
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join, resolve } from "node:path";
+
+const ICI = dirname(fileURLToPath(import.meta.url));
+const SOURCE = resolve(ICI, "..", "pages-steady-pitch", "vocal-range-test.html");
+const DIST = join(ICI, "dist");
+const CIBLE = join(DIST, "vocal-range-test.html");
+
+const RACINE = "https://thibaudlepan77-svg.github.io/steady-pitch/";
+
+let fautes = 0;
+const gronder = (m) => { console.log("  " + m); fautes++; };
+
+let html = readFileSync(SOURCE, "utf-8");
+const avant = html.length;
+
+const couper = (motif, quoi) => {
+  const apres = html.replace(motif, "");
+  if (apres === html) gronder(`FAUTE, ${quoi} est introuvable, la page a change de forme`);
+  html = apres;
+};
+
+couper(/<link rel="preconnect"[^>]*>\s*/g, "les preconnexions");
+couper(/<link href="https:\/\/fonts\.googleapis\.com[^>]*>\s*/, "la feuille de polices");
+couper(/<link rel="canonical"[^>]*>\s*/, "la balise canonique");
+couper(/<!-- Cloudflare Web Analytics -->[\s\S]*?<!-- End Cloudflare Web Analytics -->\s*/,
+  "la balise de mesure");
+couper(/\s*<p class="apres" id="tess-vente">[\s\S]*?<\/p>/, "le paragraphe de vente");
+
+// Les liens internes. `./app.html` devient le fichier voisin, les autres
+// partent vers le site, ou ils existent pour de bon.
+html = html.replaceAll('href="./app.html"', 'href="steady-pitch.html"');
+html = html.replaceAll('href="./notes/', `href="${RACINE}notes/`);
+html = html.replaceAll('href="./"', `href="${RACINE}"`);
+
+const restes = [
+  ...html.matchAll(/<link[^>]+href="(https?:[^"]+)"/g),
+  ...html.matchAll(/\ssrc="(https?:[^"]+)"/g),
+  ...html.matchAll(/url\((https?:[^)]+)\)/g),
+];
+for (const reste of restes) gronder(`FAUTE, ressource exterieure restante, ${reste[1]}`);
+
+if (/href="\.\//.test(html)) gronder("FAUTE, un lien relatif vers le site survit");
+if (!html.includes("function analyserBalayage")) gronder("FAUTE, l'analyse a disparu du fichier");
+if (!html.includes('href="steady-pitch.html"')) gronder("FAUTE, le lien vers l'entraineur a saute");
+
+if (fautes) {
+  console.log(`\n${fautes} faute(s), rien n'est ecrit`);
+  process.exit(1);
+}
+
+mkdirSync(DIST, { recursive: true });
+writeFileSync(CIBLE, html, "utf-8");
+
+console.log("LA COPIE HORS LIGNE DU TEST D'ETENDUE");
+console.log("-".repeat(62));
+console.log(`  ${avant} octets en entree, ${html.length} en sortie`);
+console.log(`  ${restes.length} ressource(s) exterieure(s) restante(s)`);
+console.log(`  dist/vocal-range-test.html`);
