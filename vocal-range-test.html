@@ -147,10 +147,11 @@
       <h2 class="suite-titre" id="tess-suite-titre"></h2>
       <p id="tess-suite-texte"></p>
       <p><a class="lancer" href="./app.html">Open the trainer, level 1 free</a></p>
-      <p class="apres">Or keep the whole set as one file that runs with the
-      internet switched off, monitor, range test and every level, for 9.99 on
-      <a href="https://payhip.com/SteadyPitch">the store</a>. One price, once,
-      nothing to unlock afterwards.</p>
+      <p class="apres" id="tess-vente">Or keep it. This range test and all six
+      levels of the trainer are two files that run with the internet switched
+      off, 9.99 on <a href="https://payhip.com/SteadyPitch">the store</a>. One
+      price, once, nothing to unlock afterwards. Everything on this page stays
+      free to use here, what you pay for is keeping it.</p>
     </div>
   </div>
 
@@ -2052,6 +2053,21 @@ function diagnostic() {
  * lire prenait une ligne. On ne recommence pas.
  */
 
+/**
+ * L'ADRESSE ECRITE SUR LA CARTE DE PARTAGE, ET POURQUOI ELLE EST EN DUR.
+ * La copie hors ligne s'ouvre en `file://`, ou `location.host` est vide et
+ * `pathname` est un chemin de disque. Une carte partagee porterait alors le
+ * nom d'un dossier de l'acheteur, ce qui ne renvoie personne nulle part et
+ * revele au passage ou il range ses fichiers.
+ */
+const ADRESSE_PUBLIQUE = "thibaudlepan77-svg.github.io/steady-pitch/vocal-range-test.html";
+
+function adresseAAfficher() {
+  return location.protocol === "http:" || location.protocol === "https:"
+    ? `${location.host}${location.pathname}`
+    : ADRESSE_PUBLIQUE;
+}
+
 const MIDI_AXE_BAS = 36;
 const MIDI_AXE_HAUT = 84;
 
@@ -2279,7 +2295,7 @@ function texteDePartage() {
     : e.classement.meilleur.reference.etiquette;
   return `My vocal range is ${nommer(e.basMidi)} to ${nommer(e.hautMidi)}, `
     + `${etendueLisible(e)}, closest to ${type}. `
-    + `Measured at ${location.origin}${location.pathname}`;
+    + `Measured at ${adresseAAfficher()}`;
 }
 
 async function copierResultat() {
@@ -2355,7 +2371,7 @@ function dessinerCarte() {
 
   c.fillStyle = "#FBF7F0";
   c.font = "500 30px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-  c.fillText(`${location.host}${location.pathname}`, CARTE_LARGEUR / 2, 588);
+  c.fillText(adresseAAfficher(), CARTE_LARGEUR / 2, 588);
 
   return toile;
 }
