@@ -23,8 +23,27 @@
  */
 
 const REGLAGES_OREILLE = {
-  /** En deca, la trame est du souffle ou du bruit, pas une note tenue. */
-  confianceMin: 0.82,
+  /**
+   * En deca, la trame est du souffle ou du bruit, pas une note tenue.
+   *
+   * CE CHIFFRE EST CELUI DU TEST D'ETENDUE, ET J'AI PAYE POUR L'APPRENDRE.
+   * J'avais d'abord ecrit 0,82, choisi au jugé parce que ca sonnait exigeant.
+   * La confiance rendue par YIN BAISSE QUAND LA NOTE DESCEND, mecaniquement,
+   * parce qu'une fenetre de 2048 echantillons contient de moins en moins de
+   * periodes. Mesure au banc en navigateur, sur un son parfait.
+   *
+   *     220 Hz   confiance 0,894     75 trames sur 75 retenues
+   *     165 Hz   confiance 0,858     74 sur 75
+   *     131 Hz   confiance 0,820     36 sur 75
+   *     110 Hz   confiance 0,789     ZERO sur 75
+   *
+   * A 0,82 le test rendait donc `no held note` a tout homme chantant sous un
+   * do 3, c'est-a-dire a la moitie grave de son public, ET precisement dans le
+   * cas dont la page fait son argument, chanter la bonne note une octave plus
+   * bas. Un seuil invente vaut moins qu'un seuil deja eprouve contre de vraies
+   * voix, et celui-la l'est.
+   */
+  confianceMin: 0.55,
   /** Duree d'ecoute par note, en millisecondes. */
   msEcoute: 3200,
   /** Duree de la note de reference. */
@@ -61,6 +80,39 @@ const etat = {
  */
 window.__oreille = etat;
 window.__oreilleNotation = { noterAppariement, composerBilan, hauteurRetenue, verdictDe };
+
+/**
+ * LE BANC EN NAVIGATEUR. Il remplace le microphone par un son de frequence
+ * CONNUE et fait tourner tout le reste pour de vrai, worklet compris, a la
+ * vraie frequence d'echantillonnage du materiel.
+ *
+ * Sans lui, la seule facon d'eprouver la chaine de mesure serait de chanter
+ * dans un navigateur pilote, qui n'a pas de microphone. Le banc hors
+ * navigateur, lui, ne juge que la notation, en lui donnant des trames que
+ * j'ai ecrites moi-meme. Entre les deux il reste le detecteur et le transport
+ * audio, et c'est precisement la que le cycle 16 avait cache sa faute.
+ *
+ * CE QU'IL NE PROUVE PAS, et je prefere l'ecrire, la capture elle-meme, le
+ * gain d'entree et la latence du bus audio.
+ */
+window.__oreilleBanc = async function (hzSource, cibleMidi) {
+  const ecoute = await ecouter(null, hzSource);
+  await new Promise((resoudre) => setTimeout(resoudre, REGLAGES_OREILLE.msEcoute));
+  const trames = await ecoute.arreter();
+  const hz = hauteurRetenue(trames, ecoute.msParTrame);
+  await liberer();
+  const confiances = trames.map((t) => t.confiance).sort((a, b) => a - b);
+  return {
+    trames: trames.length,
+    hzRetenu: hz,
+    // La confiance sert a comprendre un `null`. Sans elle, une tentative non
+    // notee ne dit pas si l'utilisateur s'est tu ou si le detecteur a doute.
+    confianceMediane: confiances.length ? confiances[Math.floor(confiances.length / 2)] : null,
+    confianceHaute: confiances.length ? confiances[confiances.length - 1] : null,
+    surLeSeuil: trames.filter((t) => t.hz > 0 && t.confiance >= REGLAGES_OREILLE.confianceMin).length,
+    note: hz === null ? null : noterAppariement(hz, midiVersHz(cibleMidi)),
+  };
+};
 
 function elt(id) {
   const noeud = document.getElementById(id);
@@ -141,6 +193,53 @@ const TEXTE_VERDICT = {
   RIEN: "Not enough held sound to score.",
 };
 
+/**
+ * CE QU'ON PROPOSE APRES LE VERDICT, ET CE N'EST PAS LE MEME TEXTE POUR TOUS.
+ *
+ * Le moment ou quelqu'un vient d'apprendre un chiffre sur sa propre voix est le
+ * seul de la page ou il a une raison de vouloir la suite. Lui servir la meme
+ * phrase de vente qu'il ait ete a huit cents ou a deux cents serait
+ * malhonnete, et se verrait.
+ *
+ * Celui qui est deja juste n'a rien a corriger, on ne lui vend pas une
+ * correction. Celui qui n'a rien produit d'exploitable a un probleme de
+ * materiel ou de consigne, et lui proposer un achat a ce moment-la serait
+ * profiter d'une mesure ratee.
+ */
+const SUITE = {
+  JUSTE: {
+    titre: "You do not need fixing, so here is the honest next thing.",
+    texte: "Matching a note you have just heard is the easy half. Holding it "
+      + "through a phrase, and finding it without a reference first, are the "
+      + "parts that take work. That is what the trainer drills.",
+  },
+  ORDINAIRE: {
+    titre: "This is the range where practice moves the number fastest.",
+    texte: "You are landing near the notes and not on them, which is the most "
+      + "common result and the most responsive to work. What changes it is "
+      + "short sessions with feedback on every attempt rather than long ones.",
+  },
+  APPROXIMATIF: {
+    titre: "You are hearing the notes. The gap is in landing on them.",
+    texte: "That gap closes with immediate feedback, because the correction has "
+      + "to arrive while the note is still sounding. Being told afterwards that "
+      + "you were flat teaches almost nothing.",
+  },
+  LOIN: {
+    titre: "Before concluding anything, rule out the boring explanations.",
+    texte: "A noisy room, a distant microphone, or singing while the reference "
+      + "note is still playing will all produce this. Try once more with "
+      + "headphones. If it holds up, start from single held notes with a "
+      + "reference sounding next to you rather than from songs.",
+  },
+  RIEN: {
+    titre: "Nothing was measured, so there is nothing to conclude.",
+    texte: "The page needs a note held for about a second to score it. Sing an "
+      + "open ah out loud rather than humming, and check that the browser is "
+      + "using the microphone you think it is.",
+  },
+};
+
 function composerBilan(resultats) {
   const valides = resultats.filter((r) => r !== null);
   const ecarts = valides.map((r) => Math.abs(r.ecartCents));
@@ -203,6 +302,30 @@ async function jouerUnTour() {
   elt("or-vive").textContent = "-";
 }
 
+/**
+ * LE MICROPHONE, DEMANDE UNE SEULE FOIS ET SOUS GARDE.
+ *
+ * POURQUOI CETTE GARDE EXISTE, ET ELLE VIENT D'UN VRAI PLANTAGE. Si l'on
+ * demande le microphone et que l'utilisateur ne repond NI oui NI non, la
+ * promesse de `getUserMedia` ne se resout jamais. Elle ne rejette pas non plus,
+ * donc aucun `catch` ne la rattrape. La page reste alors sur `Now sing it` pour
+ * toujours, en silence, et le visiteur conclut que le test est casse.
+ *
+ * Ca n'arrive pas qu'aux navigateurs pilotes. Un utilisateur qui ecarte la
+ * demande sans cliquer, ou un onglet en arriere-plan quand elle apparait,
+ * tombent au meme endroit. Un refus franc, lui, rejette proprement et se dit
+ * tout seul.
+ */
+async function obtenirMicro() {
+  elt("or-consigne").textContent = "Waiting for microphone permission.";
+  const attente = new Promise((_, rejeter) =>
+    setTimeout(() => rejeter(new Error(
+      "The browser never returned an answer about the microphone. Look for a "
+      + "permission prompt in the address bar, allow it, and start again."
+    )), 20000));
+  await Promise.race([preparer(true), attente]);
+}
+
 async function lancer(base) {
   etat.base = base;
   etat.tour = 0;
@@ -212,8 +335,10 @@ async function lancer(base) {
   montrer("or-accueil", false);
   montrer("or-resultat", false);
   montrer("or-mesure", true);
+  elt("or-erreur").hidden = true;
 
   try {
+    await obtenirMicro();
     for (etat.tour = 0; etat.tour < DEGRES.length; etat.tour++) {
       await jouerUnTour();
     }
@@ -261,6 +386,16 @@ function afficherBilan() {
   }
   detail.push("A semitone is 100 cents. Trained singers hold a note inside 10.");
   elt("or-detail").textContent = detail.join(" ");
+
+  const suite = SUITE[bilan.verdict];
+  elt("or-suite-titre").textContent = suite.titre;
+  elt("or-suite-texte").textContent = suite.texte;
+
+  // RIEN veut dire que la mesure a echoue, pas que la personne chante mal.
+  // Lui presenter un prix a ce moment-la serait encaisser sur une panne.
+  const mesureRatee = bilan.verdict === "RIEN";
+  montrer("or-offre", !mesureRatee);
+  montrer("or-vente", !mesureRatee);
 
   const hote = elt("or-lignes");
   hote.textContent = "";

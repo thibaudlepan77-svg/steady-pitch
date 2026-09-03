@@ -140,6 +140,7 @@ ${STYLE}
   .or-verdict{font-size:1.25rem;font-weight:700;margin:.2rem 0 .1rem}
   .or-chiffre{font-family:"IBM Plex Mono",monospace;color:var(--accent);
     font-size:1.05rem;margin:0 0 .6rem}
+  #or-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
 </style>
 </head>
 <body>
@@ -180,6 +181,17 @@ ${STYLE}
       <p class="detail" id="or-detail"></p>
       <div class="actions">
         <button id="or-recommencer" type="button">Test again</button>
+      </div>
+      <div id="or-suite">
+        <h2 class="suite-titre" id="or-suite-titre"></h2>
+        <p id="or-suite-texte"></p>
+        <p id="or-offre"><a class="lancer" href="./app.html">Open the trainer,
+        level 1 free</a></p>
+        <p class="apres" id="or-vente">Or keep it. The trainer, the range test and this one run
+        with the internet switched off for 9.99 on
+        <a href="https://payhip.com/SteadyPitch">the store</a>. One price, once,
+        nothing to unlock afterwards. Everything on this page stays free to use
+        here, what you pay for is keeping it.</p>
       </div>
     </div>
   </div>
