@@ -2374,7 +2374,16 @@ etat.pilote = {
     }, hz);
   },
   suivant: () => terminerBalayage(),
-  carte: () => dessinerCarte().toDataURL("image/png").length,
+  /** Pose la carte dans la page pour qu'un banc puisse la REGARDER. Mesurer
+   *  la taille du fichier ne dit rien de ce qui est dessine dessus. */
+  carte: () => {
+    document.getElementById("tess-carte-banc")?.remove();
+    const toile = dessinerCarte();
+    toile.id = "tess-carte-banc";
+    toile.style.cssText = "width:600px;display:block;margin:1rem auto";
+    document.body.appendChild(toile);
+    return toile.toDataURL("image/png").length;
+  },
   texte: texteDePartage,
 };
 
