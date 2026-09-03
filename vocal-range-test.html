@@ -92,6 +92,12 @@
     color:var(--doux)}
   .detail{font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--doux);
     margin:1rem 0 0}
+  .courbe-titre{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--doux);
+    text-transform:uppercase;letter-spacing:.06em;margin:1.6rem 0 .5rem}
+  .courbe{display:block;width:100%;height:120px;background:var(--surlign);
+    border-radius:.3rem;margin:0}
+  .courbe-legende{font-family:"IBM Plex Mono",monospace;font-size:.66rem;
+    color:var(--doux);margin:.3rem 0 1rem}
   #tess-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
   .suite-titre{font-size:1.05rem;margin:0 0 .4rem;font-weight:700;border:none;padding:0}
 </style>
@@ -140,6 +146,12 @@
         <button id="tess-recommencer" type="button">Test again</button>
       </div>
       <textarea id="tess-texte-brut" rows="3" hidden readonly></textarea>
+      <p class="courbe-titre">What the microphone actually heard</p>
+      <canvas id="tess-courbe-grave" class="courbe" height="120"></canvas>
+      <p class="courbe-legende">Low sweep. The dashed line is the note that was kept.</p>
+      <canvas id="tess-courbe-aigu" class="courbe" height="120"></canvas>
+      <p class="courbe-legende">High sweep. The reading is drawn raw, before any octave
+      correction, so you can see what the detector saw.</p>
       <p class="detail" id="tess-detail"></p>
     </div>
 
@@ -2084,6 +2096,7 @@ const etat = {
   sens: null,
   trames: [],
   balayages: { grave: null, aigu: null },
+  tramesDe: { grave: null, aigu: null },
   etendue: null,
   ecoute: null,
 };
@@ -2176,6 +2189,10 @@ async function terminerBalayage() {
     etat.ecoute = null;
   }
   etat.balayages[etat.sens] = analyserBalayage(etat.trames, etat.sens);
+  // On garde les trames brutes du balayage. Le resultat affiche ensuite la
+  // courbe, et un verdict qui montre sa donnee se discute, un verdict qui la
+  // cache se croit sur parole.
+  etat.tramesDe[etat.sens] = etat.trames.slice();
 
   if (etat.sens === "grave") {
     await demarrerBalayage("aigu");
@@ -2221,6 +2238,7 @@ function afficherResultat() {
   montrer("tess-tronquee", etendue.tronquee);
   dessinerBarres(etendue);
   elt("tess-detail").textContent = detailMesure();
+  dessinerLesDeuxCourbes();
   proposerLaSuite(etendue);
 }
 
@@ -2255,6 +2273,100 @@ function detailMesure() {
       + `${b.rejets.silence} silent frames.`);
   }
   return lignes.join(" ");
+}
+
+/**
+ * LA COURBE DU BALAYAGE, ET POURQUOI ELLE VAUT LE DETOUR.
+ * Le resultat annonce deux notes, et rien sur la page ne permettait de
+ * verifier qu'elles viennent de ce que la personne a chante. Un test qui
+ * refuse de montrer sa donnee demande qu'on le croie sur parole, et personne
+ * ne croit un inconnu sur parole.
+ *
+ * On dessine la lecture BRUTE, trame par trame, sans le repli d'octave. Une
+ * correction qu'on cache est exactement ce que je reproche aux autres.
+ *
+ * Les dimensions sont passees en parametres et non lues sur la toile. La toile
+ * porte des pixels d'ecran, le contexte est mis a l'echelle du rapport de
+ * l'appareil, et dessiner sur `toile.width` apres cette mise a l'echelle
+ * deborderait d'un facteur deux sur un ecran dense.
+ */
+function dessinerCourbe(contexte, largeur, hauteur, trames, balayage) {
+  const style = getComputedStyle(document.body);
+  const trait = style.getPropertyValue("--trait").trim() || "#ddd8cc";
+  const doux = style.getPropertyValue("--doux").trim() || "#5d5a52";
+  const accent = style.getPropertyValue("--accent").trim() || "#8a3324";
+  const MARGE = 30;
+
+  contexte.clearRect(0, 0, largeur, hauteur);
+  if (!trames || !trames.length || !balayage) return;
+
+  const y = (midi) => hauteur - 6 - positionSurAxe(midi) * (hauteur - 12);
+
+  contexte.strokeStyle = trait;
+  contexte.lineWidth = 1;
+  contexte.font = "10px ui-monospace, monospace";
+  contexte.fillStyle = doux;
+  for (let midi = MIDI_AXE_BAS; midi <= MIDI_AXE_HAUT; midi += 12) {
+    const ligne = Math.round(y(midi)) + 0.5;
+    contexte.beginPath();
+    contexte.moveTo(MARGE, ligne);
+    contexte.lineTo(largeur, ligne);
+    contexte.stroke();
+    contexte.fillText(nommer(midi), 2, ligne + 3);
+  }
+
+  contexte.strokeStyle = doux;
+  contexte.lineWidth = 1.2;
+  contexte.beginPath();
+  let leve = true;
+  trames.forEach((trame, i) => {
+    const x = MARGE + (i / Math.max(1, trames.length - 1)) * (largeur - MARGE - 2);
+    if (!(trame.hz > 0) || trame.confiance < REGLAGES_TESSITURE.confianceMin) {
+      leve = true;
+      return;
+    }
+    const ligne = y(hzVersMidi(trame.hz));
+    if (leve) { contexte.moveTo(x, ligne); leve = false; } else { contexte.lineTo(x, ligne); }
+  });
+  contexte.stroke();
+
+  if (balayage.extremeMidi !== null) {
+    const ligne = Math.round(y(balayage.extremeMidi)) + 0.5;
+    contexte.strokeStyle = accent;
+    contexte.lineWidth = 2;
+    contexte.setLineDash([4, 3]);
+    contexte.beginPath();
+    contexte.moveTo(MARGE, ligne);
+    contexte.lineTo(largeur, ligne);
+    contexte.stroke();
+    contexte.setLineDash([]);
+    contexte.fillStyle = accent;
+    contexte.font = "600 11px ui-monospace, monospace";
+    contexte.fillText(nommer(balayage.extremeMidi), largeur - 26, ligne - 4);
+  }
+}
+
+const HAUTEUR_COURBE = 120;
+
+/** LES IDENTIFIANTS SONT ECRITS EN CLAIR, ET CE N'EST PAS DE LA VERBOSITE.
+ *  Le controle de construction releve les appels a elt par expression
+ *  reguliere pour verifier que la page porte chaque identifiant. Un
+ *  identifiant calcule dans un ternaire lui echappe, donc la seule garde
+ *  contre une faute de frappe se tairait exactement quand elle sert. */
+const COURBES = { grave: () => elt("tess-courbe-grave"), aigu: () => elt("tess-courbe-aigu") };
+
+function dessinerLesDeuxCourbes() {
+  for (const sens of ["grave", "aigu"]) {
+    const toile = COURBES[sens]();
+    const largeur = toile.clientWidth || 460;
+    const densite = window.devicePixelRatio || 1;
+    toile.width = Math.round(largeur * densite);
+    toile.height = Math.round(HAUTEUR_COURBE * densite);
+    const contexte = toile.getContext("2d");
+    contexte.setTransform(densite, 0, 0, densite, 0, 0);
+    dessinerCourbe(contexte, largeur, HAUTEUR_COURBE,
+      etat.tramesDe[sens], etat.balayages[sens]);
+  }
 }
 
 function positionSurAxe(midi) {
@@ -2399,6 +2511,7 @@ function telechargerCarte() {
 
 function recommencer() {
   etat.balayages = { grave: null, aigu: null };
+  etat.tramesDe = { grave: null, aigu: null };
   etat.etendue = null;
   etat.trames = [];
   etat.etape = "accueil";
