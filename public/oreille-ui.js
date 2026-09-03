@@ -124,6 +124,23 @@ function montrer(id, visible) {
   elt(id).hidden = !visible;
 }
 
+/**
+ * POUR LES SEULS ELEMENTS QUE LA COPIE HORS LIGNE RETIRE.
+ *
+ * `emballer-oreille.mjs` coupe le paragraphe de vente, parce qu'on n'argumente
+ * pas un prix aupres de quelqu'un qui a deja paye. Le code de l'ecran, lui,
+ * continuait de le masquer ou de le montrer selon le verdict, et `elt` leve
+ * quand l'element n'est pas la. **Le fichier vendu plantait donc sur l'ecran de
+ * resultat, c'est-a-dire chez le seul utilisateur qui ait sorti sa carte.**
+ *
+ * On ne rend pas `elt` tolerant pour autant. Ailleurs, un identifiant absent
+ * est une faute de frappe et doit crier. Ici seulement, l'absence est prevue.
+ */
+function montrerSiPresent(id, visible) {
+  const noeud = document.getElementById(id);
+  if (noeud) noeud.hidden = !visible;
+}
+
 const cibleDuTour = (tour) => BASES[etat.base] + DEGRES[tour];
 
 // ---------------------------------------------------------------------------
@@ -394,8 +411,8 @@ function afficherBilan() {
   // RIEN veut dire que la mesure a echoue, pas que la personne chante mal.
   // Lui presenter un prix a ce moment-la serait encaisser sur une panne.
   const mesureRatee = bilan.verdict === "RIEN";
-  montrer("or-offre", !mesureRatee);
-  montrer("or-vente", !mesureRatee);
+  montrerSiPresent("or-offre", !mesureRatee);
+  montrerSiPresent("or-vente", !mesureRatee);
 
   const hote = elt("or-lignes");
   hote.textContent = "";

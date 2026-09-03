@@ -1,0 +1,2184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tone deaf test that listens to you sing, not a two note quiz</title>
+<meta name="description" content="Most tone deaf tests play two notes and ask if they differ, which tests your hearing. This one plays a note, listens to you sing it back, and tells you how many cents off you were. Free, in the browser, nothing uploaded.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Steady Pitch">
+<meta property="og:title" content="Tone deaf test that listens to you sing, not a two note quiz">
+<meta property="og:description" content="Most tone deaf tests play two notes and ask if they differ, which tests your hearing. This one plays a note, listens to you sing it back, and tells you how many cents off you were. Free, in the browser, nothing uploaded.">
+<meta property="og:url" content="https://thibaudlepan77-svg.github.io/steady-pitch/tone-deaf-test.html">
+<meta property="og:image" content="https://thibaudlepan77-svg.github.io/steady-pitch/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="A pitch matching test that plays a note and measures the one you sing back.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tone deaf test that listens to you sing, not a two note quiz">
+<meta name="twitter:description" content="Most tone deaf tests play two notes and ask if they differ, which tests your hearing. This one plays a note, listens to you sing it back, and tells you how many cents off you were. Free, in the browser, nothing uploaded.">
+<meta name="twitter:image" content="https://thibaudlepan77-svg.github.io/steady-pitch/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%238a3324%27%2F%3E%3Cpath%20d%3D%27M6%2021a10%2010%200%200%201%2020%200%27%20fill%3D%27none%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3Cpath%20d%3D%27M16%2021V9%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E">
+<style>
+  :root{--fond:#fbfaf7;--encre:#1b1a17;--doux:#5d5a52;--trait:#ddd8cc;--accent:#8a3324;--carte:#fff;--surlign:#f3efe4}
+  @media (prefers-color-scheme:dark){
+    :root{--fond:#14150f;--encre:#eceadf;--doux:#a09c8f;--trait:#33342b;--accent:#e0876f;--carte:#1c1d16;--surlign:#23241b}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--fond);color:var(--encre)}
+  body{font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.55}
+  main{max-width:40rem;margin:0 auto;padding:3rem 1.4rem 5rem}
+  h1{font-size:2rem;line-height:1.18;margin:0 0 .5rem;font-weight:700}
+  .sous{font-size:1.1rem;color:var(--doux);margin:0 0 1.8rem}
+  .lancer{display:inline-block;background:var(--accent);color:var(--fond);text-decoration:none;
+    font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:1.02rem;letter-spacing:.02em;
+    padding:.85rem 1.6rem;border-radius:.35rem;border:none;cursor:pointer}
+  .lancer:hover{filter:brightness(1.1)}
+  .apres{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--doux);margin:.7rem 0 0}
+  h2{font-size:1.05rem;margin:2.4rem 0 .5rem;font-weight:700;border-left:3px solid var(--accent);padding-left:.55rem}
+  p{margin:.7rem 0}
+  ul{margin:.7rem 0 .7rem 1.1rem;padding:0}
+  li{margin:.35rem 0}
+  a{color:var(--accent)}
+  footer{margin-top:3rem;padding-top:.9rem;border-top:1px solid var(--trait);
+    font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--doux)}
+  footer a{color:var(--doux)}
+
+  /* Le test. Il est en haut de page, avant un seul mot d'explication, parce
+     qu'une page qui decrit un outil au lieu d'en etre un ne convertit rien.
+     Mesure du cycle 15, cinq visites et zero clic sur un bouton qui menait
+     ailleurs. */
+  .test{border:1px solid var(--trait);background:var(--carte);border-radius:.5rem;
+    padding:1.3rem 1.2rem 1.2rem;margin:0 0 1.6rem}
+  .etape{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--doux);
+    text-transform:uppercase;letter-spacing:.06em;margin:0 0 .6rem}
+  .consigne{margin:0 0 1.1rem}
+  .vive{font-family:"IBM Plex Mono",monospace;font-size:3.6rem;font-weight:600;
+    text-align:center;line-height:1;letter-spacing:-.02em;margin:.4rem 0}
+  .extreme{font-family:"IBM Plex Mono",monospace;font-size:.9rem;text-align:center;
+    color:var(--doux);margin:0 0 1.2rem;min-height:1.3em}
+  .extreme[data-trouve="oui"]{color:var(--encre)}
+  #tess-erreur{color:var(--accent);font-family:"IBM Plex Mono",monospace;
+    font-size:.78rem;margin:.9rem 0 0}
+  .bornes{font-family:"IBM Plex Mono",monospace;font-size:2.6rem;font-weight:600;
+    text-align:center;margin:.2rem 0 .1rem;letter-spacing:-.02em}
+  .largeur{font-family:"IBM Plex Mono",monospace;text-align:center;color:var(--accent);
+    margin:0 0 .3rem}
+  .type{font-family:"IBM Plex Mono",monospace;font-size:.9rem;text-align:center;
+    color:var(--doux);margin:0 0 1.2rem}
+  .tess-rang{display:flex;align-items:center;gap:.6rem;margin:.22rem 0}
+  .tess-nom{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--doux);
+    width:6.4rem;flex:none;text-align:right}
+  .tess-piste{position:relative;flex:1;height:.85rem;background:var(--surlign);
+    border-radius:.2rem}
+  .tess-barre{position:absolute;top:0;bottom:0;border-radius:.2rem}
+  .tess-barre-vous{background:var(--accent)}
+  .tess-barre-ref{background:var(--trait)}
+  .axe{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+    font-size:.66rem;color:var(--doux);margin:.35rem 0 0;padding-left:7rem}
+  .actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.3rem}
+  .actions button{font-family:"IBM Plex Mono",monospace;font-size:.82rem;
+    color:var(--encre);background:var(--fond);border:1px solid var(--trait);
+    border-radius:.25rem;padding:.5rem .9rem;cursor:pointer}
+  #tess-texte-brut{width:100%;margin-top:.7rem;font-family:"IBM Plex Mono",monospace;
+    font-size:.75rem;padding:.5rem;border:1px solid var(--trait);border-radius:.25rem;
+    background:var(--surlign);color:var(--encre)}
+  .avertissement{font-family:"IBM Plex Mono",monospace;font-size:.75rem;
+    background:var(--surlign);border-radius:.3rem;padding:.7rem .8rem;margin:1rem 0 0;
+    color:var(--doux)}
+  .detail{font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--doux);
+    margin:1rem 0 0}
+  .courbe-titre{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--doux);
+    text-transform:uppercase;letter-spacing:.06em;margin:1.6rem 0 .5rem}
+  .courbe{display:block;width:100%;height:120px;background:var(--surlign);
+    border-radius:.3rem;margin:0}
+  .courbe-legende{font-family:"IBM Plex Mono",monospace;font-size:.66rem;
+    color:var(--doux);margin:.3rem 0 1rem}
+  #tess-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
+  .suite-titre{font-size:1.05rem;margin:0 0 .4rem;font-weight:700;border:none;padding:0}
+</style>
+<style>
+  .or-rang{display:flex;align-items:baseline;justify-content:space-between;
+    gap:.8rem;padding:.34rem 0;border-bottom:1px solid var(--trait)}
+  .or-nom{font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:.9rem}
+  .or-valeur{font-family:"IBM Plex Mono",monospace;font-size:.82rem;color:var(--doux)}
+  .or-cible{font-family:"IBM Plex Mono",monospace;font-size:2.6rem;font-weight:600;
+    line-height:1.1;margin:.2rem 0}
+  .or-vive{font-family:"IBM Plex Mono",monospace;font-size:1.6rem;color:var(--accent);
+    min-height:1.9rem}
+  .or-verdict{font-size:1.25rem;font-weight:700;margin:.2rem 0 .1rem}
+  .or-chiffre{font-family:"IBM Plex Mono",monospace;color:var(--accent);
+    font-size:1.05rem;margin:0 0 .6rem}
+  #or-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
+</style>
+</head>
+<body>
+<main>
+
+  <h1>Tone deaf test, the kind that actually listens to you.</h1>
+  <p class="sous">This one plays a note, then listens while you sing it back,
+  and tells you how far off you were in cents. It takes about a minute. It runs
+  in this tab, and nothing you sing leaves your machine.</p>
+
+  <div class="test">
+    <div id="or-accueil">
+      <p style="margin:0 0 .7rem">Pick the range that is closer to your speaking
+      voice, so the notes land somewhere you can actually sing.</p>
+      <p style="margin:0 0 .9rem">
+        <button class="lancer" id="or-grave" type="button">Lower voice</button>
+        <button class="lancer" id="or-aigu" type="button">Higher voice</button>
+      </p>
+      <p class="apres" style="margin:0">Six notes, one at a time. Your browser
+      will ask for the microphone. Headphones help, because a speaker lets the
+      reference note leak back into the microphone.</p>
+      <p id="or-erreur" hidden></p>
+    </div>
+
+    <div id="or-mesure" hidden>
+      <p class="etape" id="or-etape">Note 1 of 6</p>
+      <div class="or-cible" id="or-cible">-</div>
+      <p class="consigne" id="or-consigne">Listen.</p>
+      <div id="or-vu-metre" hidden>
+        <div class="or-vive" id="or-vive">-</div>
+      </div>
+    </div>
+
+    <div id="or-resultat" hidden>
+      <p class="or-verdict" id="or-verdict"></p>
+      <p class="or-chiffre" id="or-chiffre"></p>
+      <div id="or-lignes"></div>
+      <p class="detail" id="or-detail"></p>
+      <div class="actions">
+        <button id="or-recommencer" type="button">Test again</button>
+      </div>
+      <div id="or-suite">
+        <h2 class="suite-titre" id="or-suite-titre"></h2>
+        <p id="or-suite-texte"></p>
+        <p id="or-offre"><a class="lancer" href="steady-pitch.html">Open the trainer,
+        level 1 free</a></p>
+      </div>
+    </div>
+  </div>
+
+  <p><a class="lancer" href="vocal-range-test.html">Then find your range</a></p>
+  <p class="apres">Two sweeps, two minutes. It names your lowest and highest
+  note and the voice type you sit closest to.</p>
+
+  <h2>What this measures, and what nearly every other test measures</h2>
+  <p>Search for a tone deaf test and you will get a quiz that plays two notes
+  and asks whether they were the same. That is a test of <em>perception</em>,
+  and the overwhelming majority of people who believe they are tone deaf pass
+  it comfortably. Passing it and still being told you sing badly is a confusing
+  place to end up, and it is where most people end up.</p>
+  <p>The reason is that singing in tune is two skills, not one. Hearing that a
+  note is wrong is the first. Getting your voice to land on a note you can
+  already hear is the second, and it is motor control rather than hearing. They
+  fail independently, and the second one fails far more often.</p>
+  <p>This page tests the second one. It plays a target, listens to what you
+  actually produce, and reports the distance in cents. A semitone is 100 cents.
+  A trained singer holds a note inside about 10 of them.</p>
+
+  <h2>Singing the right note in the wrong octave is not a mistake</h2>
+  <p>If a target is played high and you sing it an octave lower, you have
+  matched it. That is the same note. A man given a note in a soprano's range
+  will usually and correctly drop it an octave, and a test that marks him wrong
+  for it is broken.</p>
+  <p>So this page folds your answer onto the nearest octave before scoring it,
+  and then tells you separately how many times it did that. The count is
+  information about your voice, not a penalty.</p>
+
+  <h2>Being consistently flat is a different problem from being scattered</h2>
+  <p>Two people can average the same error and need completely different work.
+  Somebody who lands 30 cents under every single target has one habit to
+  correct, and it usually goes within a few sessions once they know. Somebody
+  who is 30 cents out in random directions is not missing a correction, they
+  are missing the feedback loop.</p>
+  <p>The result below separates them, because the average on its own hides the
+  distinction that decides what you should practise.</p>
+
+  <h2>What this page cannot tell you</h2>
+  <p>It cannot diagnose amusia, the genuine perceptual condition that the phrase
+  tone deaf properly refers to. Amusia is a problem with hearing pitch
+  relationships, it affects a small percentage of people, and finding it
+  requires a perception test rather than a microphone. If you score badly here
+  <em>and</em> you cannot hear the difference when somebody else sings out of
+  tune, that combination is worth taking to a professional.</p>
+  <p>It also cannot see your technique. Breath, larynx position and vowel all
+  move pitch around, and a number in cents will not tell you which of them is
+  responsible.</p>
+
+  <h2>Where the number comes from</h2>
+  <p>The detector is the same one behind the <a href="https://thibaudlepan77-svg.github.io/steady-pitch/">live monitor</a>, the
+  <a href="vocal-range-test.html">range test</a> and the
+  <a href="steady-pitch.html">trainer</a>. It used to read every note sharp, by 2.6
+  cents at a concert A and by nearly 30 at the bottom of a bass range, and the
+  failure and its fix are written up with the measurements in
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/notes/pitch-detector-reads-sharp.html">my pitch detector read every
+  note sharp</a>. Reporting a cents figure from a detector with a known bias
+  would have been worse than reporting nothing.</p>
+  <p>Each attempt is scored on the median of the confident frames, with the
+  first part of every attempt discarded, because the start of a sung note is
+  almost always a slide onto it rather than the note itself.</p>
+
+  <h2>Nothing is uploaded</h2>
+  <p>The microphone stream is analysed inside the page. There is no server, no
+  account, no upload and no cookie for this test. Close the tab and it is gone.</p>
+
+  <footer>
+    Steady Pitch, by Thibaud Lepan.
+    Questions and bug reports, thibaudlepanpro@gmail.com.
+    <a href="https://thibaudlepan77-svg.github.io/steady-pitch/">Home</a>.
+    <a href="https://thibaudlepan77-svg.github.io/steady-pitch/vocal-range-chart.html">The range chart</a>.
+    <a href="https://payhip.com/SteadyPitch">The store</a>.
+  </footer>
+
+</main>
+<script>
+/* OREILLE:DEBUT */
+/* Depose par travail/web-steady-pitch/page-oreille.mjs. Ne pas editer ici. */
+(function () {
+/* notation.js */
+/**
+ * notation.ts, LE NOYAU DE NOTATION DE JUSTESSE.
+ * Agent N4, 2026-08-25 (cycle 10, chantier 12).
+ *
+ * CE QUE C'EST, ET POURQUOI C'EST LE PREMIER FICHIER DE PRODUIT QUE J'ECRIS.
+ * C'est le portage en TypeScript de la couche validee en Python au chantier 2,
+ * puis reverifiee sur 29 chanteurs au chantier 11. Il transforme un flux de
+ * hauteurs brutes, tel que le rend `react-native-pitchy`, en un VERDICT
+ * pedagogique. C'est tout ce que la bibliotheque ne fait pas, et c'est
+ * exactement ce que les concurrents font mal d'apres les 449 avis negatifs
+ * lus au chantier 3.
+ *
+ * POURQUOI IL EST ISOLE DE TOUTE INTERFACE, ET C'EST DELIBERE.
+ * Mon modele economique repose sur la REPLICATION, plusieurs titres de niche
+ * batis sur le meme coeur. Ce fichier ne connait donc ni React, ni Expo, ni le
+ * micro, ni l'affichage. Il ne prend que des nombres et rend des verdicts. Il
+ * se teste en une commande sans appareil, sans build et sans serveur, et il se
+ * reutilisera tel quel pour un entraineur d'intervalles ou un lecteur de notes.
+ *
+ * AUCUNE DEPENDANCE. Rien a installer, rien a mettre a jour, rien qui casse.
+ */
+
+// ---------------------------------------------------------------------------
+// Constantes musicales
+// ---------------------------------------------------------------------------
+
+const LA_REFERENCE = 440;
+const NOMS_NOTES = ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"];
+
+/** Ecart en cents entre deux hauteurs. Cent = centieme de demi-ton. */
+function cents(hz        , reference        )         {
+  if (hz <= 0 || reference <= 0) return NaN;
+  return 1200 * Math.log2(hz / reference);
+}
+
+/**
+ * LE LA DE REFERENCE EST UN PARAMETRE, ET CE N'EST PAS UN LUXE.
+ * MESURE, cycle 11. Le piano de reference de l'universite de l'Iowa, enregistre
+ * dans les regles, ressort a 442,2 Hz et non a 440. Ce n'est pas un defaut de
+ * ce piano, c'est l'usage. Beaucoup d'orchestres et de conservatoires
+ * europeens accordent a 442 ou 443, et la musique ancienne descend a 415.
+ * UN ELEVE DONT L'INSTRUMENT EST ACCORDE A 442 SERAIT JUGE HUIT CENTS TROP
+ * HAUT SUR CHAQUE NOTE, indefiniment, sans jamais atteindre le verdict le plus
+ * haut et sans jamais comprendre pourquoi. C'est le genre de defaut qui produit
+ * un avis a une etoile disant "l'application se trompe", exactement le grief
+ * dont je fais mon argument de vente.
+ */
+function midiVersHz(midi        , laReference         = LA_REFERENCE)         {
+  return laReference * Math.pow(2, (midi - 69) / 12);
+}
+
+/** Les la de reference usuels, proposes au reglage. La liste est courte
+ *  volontairement, un reglage a curseur libre inviterait a bricoler. */
+const REFERENCES_USUELLES                                  = [
+  { hz: 415, usage: "musique ancienne" },
+  { hz: 432, usage: "accord alternatif" },
+  { hz: 440, usage: "norme internationale" },
+  { hz: 442, usage: "usage courant en Europe" },
+  { hz: 443, usage: "certains orchestres" },
+];
+
+function hzVersMidi(hz        )         {
+  return 69 + 12 * Math.log2(hz / LA_REFERENCE);
+}
+
+function nomDeMidi(midi        )         {
+  const m = Math.round(midi);
+  return `${NOMS_NOTES[((m % 12) + 12) % 12]}${Math.floor(m / 12) - 1}`;
+}
+
+// ---------------------------------------------------------------------------
+// Reglages
+// ---------------------------------------------------------------------------
+
+                                                                         
+                                                                       
+                                                                           
+                             
+                  
+
+                           
+                                                                               
+               
+               
+                                                                         
+                       
+                                                                             
+                   
+                                                                            
+                   
+                  
+                       
+                                                                  
+                                                                              
+                                                                                
+                                                                                
+                                                                        
+                  
+                             
+                                                               
+                                                                            
+                                                                           
+                                                                           
+                                                                             
+                                                                       
+                                                                       
+                                                                         
+                       
+                                                                            
+                                                                                 
+                     
+                                                                           
+                                                      
+                                                                          
+                                                                           
+                                                                         
+                                                                            
+                                                           
+                                                                            
+                                                                             
+                                                                            
+                             
+                                                      
+                      
+                                                                       
+                    
+ 
+
+/**
+ * LE PLANCHER DU MOTEUR, ET CE N'EST PAS UN CHOIX DE PRODUIT.
+ * `react-native-pitchy` porte une frequence minimale codee en dur a 65,41 Hz.
+ * MESURE, cycle 11, sur 103 notes de tuba et de contrebasse situees sous cette
+ * barre, la justesse brute est de ZERO pour cent. Pas degradee, nulle. Sous ce
+ * plancher le detecteur ne rend pas une valeur imprecise, il rend autre chose.
+ * Une application qui repond FAUX a un debutant qui joue JUSTE se fait
+ * desinstaller. Elle doit repondre qu'elle n'entend pas.
+ * LA VALEUR EST POSEE JUSTE SOUS LE DO 2 ET NON A 65,41 EXACTEMENT. La limite
+ * de la bibliotheque EST le do 2, et le do 2 lui-meme se mesure a 99,5 pour
+ * cent de justesse sur 392 notes. Une borne posee sur la note elle-meme la
+ * refuserait a un cheveu pres, pour une raison d'arrondi et pour aucune raison
+ * physique.
+ */
+const MOTEUR_F_MIN = 65.0;
+
+/**
+ * LE PLAFOND FIABLE, et lui est un seuil doux, pas un mur.
+ * MESURE, cycle 11. Justesse brute par octave, 98,0 pour cent a l'octave 5,
+ * 91,0 a l'octave 6, 82,7 a l'octave 7. Au-dessus du do 7 je prefere prevenir
+ * plutot que de noter une flute piccolo avec une confiance que je n'ai pas.
+ */
+const MOTEUR_F_MAX_FIABLE = 2093.0;
+
+/** La note demandee est-elle jugeable par le moteur. Retourne null si oui. */
+function cibleHorsPortee(cibleHz        )                          {
+  if (!(cibleHz > 0)) return null;
+  if (cibleHz < MOTEUR_F_MIN) return "GRAVE";
+  if (cibleHz > MOTEUR_F_MAX_FIABLE) return "AIGU";
+  return null;
+}
+
+const REGLAGES_DEFAUT           = {
+  fMin: 70,
+  fMax: 1100,
+  confianceMin: 0.5,
+  alphaEma: 0.25,
+  // Un debutant ne tient pas dix cents. Le declarer faux le fait desinstaller.
+  tolJuste: 45,
+  tolBien: 25,
+  tolExcellent: 15,
+  partAttaqueIgnoree: 1 / 3,
+  attaqueMinMs: 0,
+  msParTrame: 46.4,
+  porteRelativeRatio: 0,
+  laReference: LA_REFERENCE,
+  tramesMin: 4,
+};
+
+/** Tessitures usuelles, proposees a la calibration. Bornes larges volontaires. */
+const TESSITURES                                                 = {
+  basse: { fMin: 70, fMax: 400 },
+  baryton: { fMin: 85, fMax: 450 },
+  tenor: { fMin: 110, fMax: 550 },
+  alto: { fMin: 150, fMax: 700 },
+  mezzo: { fMin: 180, fMax: 900 },
+  soprano: { fMin: 220, fMax: 1100 },
+  enfant: { fMin: 200, fMax: 1100 },
+  large: { fMin: 70, fMax: 1100 },
+};
+
+// ---------------------------------------------------------------------------
+// LE MODE D'ENTREE, ajoute le 2026-08-25 (cycle 10, chantier 18)
+// ---------------------------------------------------------------------------
+/**
+ * POURQUOI CE MODE EXISTE, ET IL VAUT UN PARAGRAPHE.
+ * La mesure du chantier 17 a montre que la poche de la voix seule ne compte que
+ * deux titres vivants, quand la poche voisine, la lecture de notes jouee, en
+ * compte cinq et vingt fois plus de demande. Or lire une portee et la CHANTER
+ * est deja de la lecture de notes, la seule difference est l'instrument qui
+ * produit le son. Et ce noyau ne fait aucune difference entre les deux, une
+ * hauteur est une hauteur.
+ * Servir les deux ne demande donc PAS un second moteur, cela demande ce seul
+ * reglage. C'est tout le cout de l'elargissement.
+ *
+ * CE QUE LE MODE CHANGE, ET RIEN D'AUTRE.
+ *   - LA PLAGE. Un piano descend a 27 Hz et monte a 4 186, tres au-dela de
+ *     toute voix. Garder les bornes vocales sur un instrument rejetterait des
+ *     notes parfaitement valides.
+ *   - LA TOLERANCE. Un instrument accorde ne derive pas, un chanteur si. Exiger
+ *     d'une voix la precision d'un piano decourage, et accorder a un piano la
+ *     tolerance d'une voix laisse passer des fausses notes. Les seuils vocaux
+ *     viennent de la mesure, la derive naturelle mediane observee sur 29
+ *     chanteurs est d'environ 10 cents, d'ou une tolerance genereuse a 45.
+ *   - L'ATTAQUE. Une note jouee s'etablit presque instantanement, une note
+ *     chantee arrive par un glissement. On jette un tiers du debut pour la voix,
+ *     mesure a l'appui, et beaucoup moins pour un instrument.
+ */
+                                               
+
+const REGLAGES_PAR_MODE                                        = {
+  voix: {
+    fMin: 70, fMax: 1100,
+    tolJuste: 45, tolBien: 25, tolExcellent: 15,
+    partAttaqueIgnoree: 1 / 3,
+    attaqueMinMs: 0,
+    // La porte fixe reste, et ce n'est pas un oubli. Sur les deux corpus
+    // vocaux elle n'a jamais rejete une seule trame juste, elle ne coute donc
+    // rien ici, et la tessiture choisie a la calibration est une fonction du
+    // produit et pas seulement un filtre. On ne remplace pas ce qui est mesure
+    // bon par ce qui est mesure bon ailleurs.
+    porteRelativeRatio: 0,
+  },
+  instrument: {
+    // CORRIGE le 2026-08-25 (cycle 11) APRES MESURE. La version precedente
+    // annoncait 27 a 4200 Hz, deduite de l'etendue d'un piano et jamais
+    // confrontee au moteur. Le moteur ne descend pas sous 65,41 Hz, il y rend
+    // zero pour cent de bonnes reponses sur 103 notes.
+    fMin: MOTEUR_F_MIN, fMax: MOTEUR_F_MAX_FIABLE,
+    // un instrument accorde tient sa note, on peut donc etre plus exigeant
+    tolJuste: 25, tolBien: 12, tolExcellent: 6,
+    // l'attaque d'une corde ou d'un marteau est breve mais elle est REELLE,
+    // et elle se compte en millisecondes. Voir `attaqueMinMs`.
+    partAttaqueIgnoree: 0.15,
+    attaqueMinMs: 120,
+    // dix points de justesse, gagnes en retirant un filtre. Voir le champ.
+    porteRelativeRatio: 2.2,
+  },
+};
+
+/** Construit les reglages d'une seance. Le mode d'abord, la tessiture ensuite
+ *  si l'on chante, et les surcharges explicites en dernier. */
+function reglagesPour(
+  mode            ,
+  tessiture         ,
+  surcharges                    = {}
+)           {
+  const base = { ...REGLAGES_DEFAUT, ...REGLAGES_PAR_MODE[mode] };
+  // La tessiture ne s'applique qu'a la voix. Un piano n'a pas de tessiture au
+  // sens vocal, et l'appliquer amputerait son clavier.
+  if (mode === "voix" && tessiture && TESSITURES[tessiture]) {
+    base.fMin = TESSITURES[tessiture].fMin;
+    base.fMax = TESSITURES[tessiture].fMax;
+  }
+  return { ...base, ...surcharges };
+}
+
+// ---------------------------------------------------------------------------
+// L'entree, telle que la rend react-native-pitchy
+// ---------------------------------------------------------------------------
+
+                        
+                                                                
+                             
+ 
+
+                           
+                   
+                                                          
+                     
+                                        
+                   
+                                                           
+                
+                                                                          
+                         
+                         
+                     
+                           
+                                                                  
+                      
+                                                                
+                                
+ 
+
+// ---------------------------------------------------------------------------
+// Les parades, une par une
+// ---------------------------------------------------------------------------
+
+/**
+ * Ramene une hauteur dans l'octave de la cible.
+ *
+ * MESURE, ET ELLE NUANCE CETTE FONCTION. Sur des donnees correctement annotees
+ * ce repli ne gagne que 0,6 point, parce qu'un detecteur bien regle ne se
+ * trompe presque jamais d'octave. Ce n'est donc PAS le levier de qualite que je
+ * croyais, c'est une SECURITE bon marche. On la garde parce qu'elle ne coute
+ * rien et qu'elle transforme l'erreur la plus humiliante pour l'utilisateur,
+ * etre declare faux d'une octave alors qu'on chante juste, en non-evenement.
+ */
+function replierOctave(hz        , cibleHz        )         {
+  if (hz <= 0 || cibleHz <= 0) return hz;
+  const k = Math.round(Math.log2(hz / cibleHz));
+  return hz / Math.pow(2, k);
+}
+
+/** Mediane, sans dependance. */
+function mediane(xs          )         {
+  if (xs.length === 0) return NaN;
+  const t = [...xs].sort((a, b) => a - b);
+  const m = t.length >> 1;
+  return t.length % 2 ? t[m] : (t[m - 1] + t[m]) / 2;
+}
+
+/**
+ * Note une tentative complete contre une hauteur cible.
+ * C'est la seule fonction que l'interface a besoin d'appeler.
+ */
+function noterTentative(
+  trames         ,
+  cibleHz        ,
+  reglages           = REGLAGES_DEFAUT
+)           {
+  const retenues           = [];
+  const affichage           = [];
+  let ema                = null;
+  let rejetConfiance = 0;
+  let rejetPlage = 0;
+  let octavesCorrigees = 0;
+
+  // LA NOTE DEMANDEE EST-ELLE JUGEABLE. On repond avant de juger quoi que ce
+  // soit, parce qu'un verdict FAUX rendu sur une note que le moteur n'entend
+  // pas est un mensonge, et le pire de tous, celui qui accuse l'utilisateur.
+  const horsPortee = cibleHorsPortee(cibleHz);
+  if (horsPortee !== null) {
+    return {
+      verdict: "HORS_PORTEE", ecartCents: NaN, hzMedian: NaN, score: 0,
+      tramesRetenues: 0, rejetConfiance: 0, rejetPlage: 0,
+      octavesCorrigees: 0, affichage: [], horsPortee,
+    };
+  }
+
+  // LA PORTE DE PLAGE. Relative a la note demandee quand le mode le prevoit,
+  // fixe sinon. Mesure du cycle 11, la porte fixe jetait 288 bonnes reponses
+  // sur 2913 des qu'on sortait de la tessiture d'une voix.
+  const relatif = reglages.porteRelativeRatio > 0;
+  const borneBasse = relatif
+    ? Math.max(MOTEUR_F_MIN, cibleHz / reglages.porteRelativeRatio)
+    : reglages.fMin;
+  const borneHaute = relatif
+    ? cibleHz * reglages.porteRelativeRatio
+    : reglages.fMax;
+
+  for (const t of trames) {
+    if (!(t.hz > 0) || t.confiance < reglages.confianceMin) {
+      rejetConfiance++;
+      continue;
+    }
+    if (t.hz < borneBasse || t.hz > borneHaute) {
+      rejetPlage++;
+      continue;
+    }
+    const corrige = replierOctave(t.hz, cibleHz);
+    if (Math.abs(cents(corrige, t.hz)) > 1) octavesCorrigees++;
+    retenues.push(corrige);
+    ema = ema === null ? corrige : reglages.alphaEma * corrige + (1 - reglages.alphaEma) * ema;
+    affichage.push(ema);
+  }
+
+  if (retenues.length < reglages.tramesMin) {
+    return {
+      verdict: "SILENCE", ecartCents: NaN, hzMedian: NaN, score: 0,
+      tramesRetenues: retenues.length, rejetConfiance, rejetPlage,
+      octavesCorrigees, affichage,
+    };
+  }
+
+  // On jette l'attaque. Deux mesures du meme phenomene, une en proportion pour
+  // le glissando du chanteur, une en millisecondes pour le choc de la corde.
+  // On prend la plus exigeante des deux, puis on garde toujours de quoi juger.
+  const parFraction = Math.floor(retenues.length * reglages.partAttaqueIgnoree);
+  const parDuree = reglages.msParTrame > 0
+    ? Math.ceil(reglages.attaqueMinMs / reglages.msParTrame)
+    : 0;
+  const plafond = Math.max(0, retenues.length - reglages.tramesMin);
+  const debut = Math.min(Math.max(parFraction, parDuree), plafond);
+  const fenetre = retenues.slice(debut);
+  const hzMedian = mediane(fenetre.length ? fenetre : retenues);
+  const ecart = cents(hzMedian, cibleHz);
+  const abs = Math.abs(ecart);
+
+  let verdict         ;
+  if (abs <= reglages.tolExcellent) verdict = "EXCELLENT";
+  else if (abs <= reglages.tolBien) verdict = "BIEN";
+  else if (abs <= reglages.tolJuste) verdict = "JUSTE";
+  else verdict = "FAUX";
+
+  // Score lineaire, 100 a zero cent, 0 a la tolerance de justesse doublee.
+  const score = Math.max(0, Math.round(100 * (1 - abs / (reglages.tolJuste * 2))));
+
+  return {
+    verdict, ecartCents: ecart, hzMedian, score,
+    tramesRetenues: retenues.length, rejetConfiance, rejetPlage,
+    octavesCorrigees, affichage,
+  };
+}
+
+/** Position du curseur, de -1 (trop grave) a +1 (trop aigu), bornee. */
+function positionCurseur(hz        , cibleHz        , etendueCents = 100)         {
+  const c = cents(hz, cibleHz);
+  if (Number.isNaN(c)) return 0;
+  return Math.max(-1, Math.min(1, c / etendueCents));
+}
+
+/* langues.js */
+/**
+ * langues.ts, NOMS DE NOTES ET LOCALISATION.
+ * Agent N4, 2026-08-25 (cycle 10, chantier 21). Aucune dependance.
+ *
+ * CE FICHIER REPOND A DEUX CHOSES MESUREES, PAS A UNE INTUITION.
+ *
+ * 1. UN GRIEF DE CONCURRENT, RELEVE AU CHANTIER 3. Un acheteur ecrit, sur un
+ *    titre payant, "Fixed Do only! This is a total waste of money if you have to
+ *    learn movable do. The stupid app only does fixed do." Il a paye et il
+ *    demande un remboursement pour une option qui coute une journee.
+ *    Le monde se partage en effet deux systemes de nommage, et un musicien
+ *    formé dans l'un ne lit pas l'autre.
+ *      SYLLABES FIXES, do re mi fa sol la si, ou do EST toujours ut. Pays
+ *        latins, France, Italie, Espagne, Amerique latine, Russie.
+ *      LETTRES, C D E F G A B. Pays anglophones et germanophones.
+ *      DO MOBILE, les memes syllabes mais do designe la TONIQUE, quelle que
+ *        soit la tonalite. C'est le systeme de l'enseignement Kodaly, donc
+ *        celui de mon curriculum, et c'est celui que l'acheteur ci-dessus
+ *        reclamait.
+ *    PIEGE A NE PAS RATER, en allemand le SI se note H et non B, et B designe
+ *    le si bemol. Un logiciel qui l'ignore affiche une fausse note a un
+ *    musicien allemand, ce qui est pire que de ne pas traduire du tout.
+ *
+ * 2. UN CRITERE DE SELECTION D'APPLE, LU AU CHANTIER 20. Apple pondere
+ *    explicitement la LOCALISATION dans le choix des applications qu'il met en
+ *    avant, et la mise en avant editoriale est l'une des quatre portes
+ *    d'acquisition, gratuite et ouverte aux inconnus. Mon produit a tres peu de
+ *    texte, une trentaine de libelles, donc traduire est bon marche ici et
+ *    couteux ailleurs. C'est exactement le genre d'asymetrie qu'il faut
+ *    exploiter.
+ */
+
+// ---------------------------------------------------------------------------
+// Les systemes de nommage des notes
+// ---------------------------------------------------------------------------
+
+                                                                            
+
+/** Noms des douze degres chromatiques, du do au si, par systeme. */
+const NOMS                                 = {
+  // syllabes latines, do fixe
+  syllabes: ["Do", "Do#", "Re", "Re#", "Mi", "Fa", "Fa#", "Sol", "Sol#", "La", "La#", "Si"],
+  // lettres anglo-saxonnes
+  lettres: ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"],
+  // lettres allemandes, le si est H et le si bemol est B
+  lettres_de: ["C", "Cis", "D", "Dis", "E", "F", "Fis", "G", "Gis", "A", "B", "H"],
+  // do mobile, les syllabes designent des DEGRES et non des hauteurs
+  mobile: ["Do", "Di", "Re", "Ri", "Mi", "Fa", "Fi", "Sol", "Si", "La", "Li", "Ti"],
+};
+
+/**
+ * Nomme une note. `toniqueMidi` n'est utilise QUE par le systeme mobile, ou le
+ * nom depend du degre dans la tonalite et non de la hauteur absolue.
+ */
+function nommerNote(midi        , systeme               = "lettres",
+                           toniqueMidi = 0)         {
+  const m = Math.round(midi);
+  // GARDE AJOUTEE AU CYCLE 11. Un systeme inconnu faisait planter la fonction
+  // sur un tableau indefini, et un reglage enregistre par une version
+  // precedente de l'app suffisait donc a faire tomber l'ecran entier. On
+  // retombe silencieusement sur les lettres, qui sont le defaut.
+  if (!NOMS[systeme]) systeme = "lettres";
+  if (systeme === "mobile") {
+    const degre = ((m - Math.round(toniqueMidi)) % 12 + 12) % 12;
+    return NOMS.mobile[degre];
+  }
+  const octave = Math.floor(m / 12) - 1;
+  return NOMS[systeme][((m % 12) + 12) % 12] + octave;
+}
+
+// ---------------------------------------------------------------------------
+// Les libelles de l'interface
+// ---------------------------------------------------------------------------
+
+                                                             
+
+const LANGUES           = ["en", "fr", "es", "de", "it", "pt"];
+
+/** Le systeme de nommage par defaut d'une langue, celui qu'un musicien de ce
+ *  pays attend. Il reste modifiable dans les reglages, c'est un defaut, pas
+ *  une contrainte. */
+const SYSTEME_PAR_DEFAUT                               = {
+  en: "lettres",
+  de: "lettres_de",
+  fr: "syllabes",
+  es: "syllabes",
+  it: "syllabes",
+  pt: "syllabes",
+};
+
+                 
+                                                                           
+                                                                             
+                                                                               
+         
+                                                                          
+                                                                        
+                                                                          
+                                          
+                                            
+                                 
+                                                                          
+                                                                            
+                                                                         
+                                                        
+           
+                                                                       
+                                                                       
+                                                                       
+                                                           
+                                                 
+                                                                         
+                                                                          
+                                                                            
+                                                                             
+                                                                         
+                                                                             
+                                                                      
+                         
+
+                                 
+
+const TEXTES                        = {
+  en: {
+    titre: "Steady Pitch", chantez: "Sing this note", jouez: "Play this note",
+    excellent: "Spot on", bien: "Good", juste: "In tune", faux: "Off",
+    silence: "Nothing heard", trop_grave: "A little low", trop_aigu: "A little high",
+    score: "Score", niveau: "Level", reessayer: "Try again", suivant: "Next",
+    cents: "cents", choisir_voix: "I will sing", choisir_instrument: "I will play",
+    progression: "Progress",
+    sur: "out of",
+    diese: "sharp",
+    a_revoir: "Review this one",
+    nouveau_niveau: "New level next time",
+    ecart_moyen: "Average error",
+    choisir_entree: "How do you want to work on your pitch",
+    tessiture: "Your range",
+    tess_basse: "Bass", tess_baryton: "Baritone", tess_tenor: "Tenor", tess_alto: "Alto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Child", tess_large: "Not sure",
+    recommencer: "Start again",
+    ecoute_en_cours: "Listening",
+    details_techniques: "Technical details",
+    hors_portee_grave: "This note is too low for the microphone",
+    hors_portee_aigu: "This note is too high for the microphone",
+    micro_refuse: "Steady Pitch needs your microphone. Allow it in your browser, then tap the button again.",
+    demo_suite: "This is level 1 of 6. The full file opens the other five, thirty exercises in all.",
+  },
+  fr: {
+    titre: "Steady Pitch", chantez: "Chantez cette note", jouez: "Jouez cette note",
+    excellent: "Parfait", bien: "Bien", juste: "Juste", faux: "Faux",
+    silence: "Rien entendu", trop_grave: "Un peu bas", trop_aigu: "Un peu haut",
+    score: "Score", niveau: "Niveau", reessayer: "Reessayer", suivant: "Suivant",
+    cents: "cents", choisir_voix: "Je vais chanter", choisir_instrument: "Je vais jouer",
+    progression: "Progression",
+    sur: "sur",
+    diese: "diese",
+    a_revoir: "A revoir",
+    nouveau_niveau: "Niveau suivant la prochaine fois",
+    ecart_moyen: "Ecart moyen",
+    choisir_entree: "Choisissez comment travailler votre justesse",
+    tessiture: "Votre tessiture",
+    tess_basse: "Basse", tess_baryton: "Baryton", tess_tenor: "Tenor", tess_alto: "Alto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Enfant", tess_large: "Je ne sais pas",
+    recommencer: "Recommencer",
+    ecoute_en_cours: "A l'ecoute",
+    details_techniques: "Details techniques",
+    hors_portee_grave: "Cette note est trop grave pour le micro",
+    hors_portee_aigu: "Cette note est trop aigue pour le micro",
+    micro_refuse: "Steady Pitch a besoin du microphone. Autorisez le micro dans le navigateur, puis appuyez de nouveau sur le bouton.",
+    demo_suite: "Ceci est le niveau 1 sur 6. Le fichier complet ouvre les cinq autres, trente exercices en tout.",
+  },
+  es: {
+    titre: "Steady Pitch", chantez: "Canta esta nota", jouez: "Toca esta nota",
+    excellent: "Perfecto", bien: "Bien", juste: "Afinado", faux: "Desafinado",
+    silence: "No se oye nada", trop_grave: "Un poco bajo", trop_aigu: "Un poco alto",
+    score: "Puntuacion", niveau: "Nivel", reessayer: "Reintentar", suivant: "Siguiente",
+    cents: "cents", choisir_voix: "Voy a cantar", choisir_instrument: "Voy a tocar",
+    progression: "Progreso",
+    sur: "de",
+    diese: "sostenido",
+    a_revoir: "Repasar esta",
+    nouveau_niveau: "Nuevo nivel la proxima vez",
+    ecart_moyen: "Error medio",
+    choisir_entree: "Como quieres trabajar tu afinacion",
+    tessiture: "Tu tesitura",
+    tess_basse: "Bajo", tess_baryton: "Baritono", tess_tenor: "Tenor", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Nino", tess_large: "No lo se",
+    recommencer: "Empezar de nuevo",
+    ecoute_en_cours: "Escuchando",
+    details_techniques: "Detalles tecnicos",
+    hors_portee_grave: "Esta nota es demasiado grave para el microfono",
+    hors_portee_aigu: "Esta nota es demasiado aguda para el microfono",
+    micro_refuse: "Steady Pitch necesita el microfono. Permitelo en el navegador y vuelve a tocar el boton.",
+    demo_suite: "Este es el nivel 1 de 6. El archivo completo abre los otros cinco, treinta ejercicios en total.",
+  },
+  de: {
+    titre: "Steady Pitch", chantez: "Singe diesen Ton", jouez: "Spiele diesen Ton",
+    excellent: "Genau", bien: "Gut", juste: "Sauber", faux: "Daneben",
+    silence: "Nichts gehort", trop_grave: "Etwas zu tief", trop_aigu: "Etwas zu hoch",
+    score: "Punkte", niveau: "Stufe", reessayer: "Nochmal", suivant: "Weiter",
+    cents: "Cent", choisir_voix: "Ich singe", choisir_instrument: "Ich spiele",
+    progression: "Fortschritt",
+    sur: "von",
+    diese: "Kreuz",
+    a_revoir: "Nochmal ueben",
+    nouveau_niveau: "Naechstes Mal neue Stufe",
+    ecart_moyen: "Mittlere Abweichung",
+    choisir_entree: "Wie willst du an deiner Intonation arbeiten",
+    tessiture: "Dein Stimmumfang",
+    tess_basse: "Bass", tess_baryton: "Bariton", tess_tenor: "Tenor", tess_alto: "Alt",
+    tess_mezzo: "Mezzo", tess_soprano: "Sopran", tess_enfant: "Kind", tess_large: "Weiss ich nicht",
+    recommencer: "Neu beginnen",
+    ecoute_en_cours: "Hoert zu",
+    details_techniques: "Technische Details",
+    hors_portee_grave: "Dieser Ton ist zu tief fur das Mikrofon",
+    hors_portee_aigu: "Dieser Ton ist zu hoch fur das Mikrofon",
+    micro_refuse: "Steady Pitch braucht Ihr Mikrofon. Erlauben Sie es im Browser und tippen Sie erneut.",
+    demo_suite: "Das ist Stufe 1 von 6. Die vollstandige Datei offnet die anderen funf, insgesamt dreissig Ubungen.",
+  },
+  it: {
+    titre: "Steady Pitch", chantez: "Canta questa nota", jouez: "Suona questa nota",
+    excellent: "Perfetto", bien: "Bene", juste: "Intonato", faux: "Stonato",
+    silence: "Non si sente nulla", trop_grave: "Un po' basso", trop_aigu: "Un po' alto",
+    score: "Punteggio", niveau: "Livello", reessayer: "Riprova", suivant: "Avanti",
+    cents: "cents", choisir_voix: "Canto io", choisir_instrument: "Suono io",
+    progression: "Progressi",
+    sur: "su",
+    diese: "diesis",
+    a_revoir: "Da rivedere",
+    nouveau_niveau: "Prossimo livello la volta prossima",
+    ecart_moyen: "Errore medio",
+    choisir_entree: "Come vuoi lavorare sulla tua intonazione",
+    tessiture: "La tua estensione",
+    tess_basse: "Basso", tess_baryton: "Baritono", tess_tenor: "Tenore", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Bambino", tess_large: "Non lo so",
+    recommencer: "Ricomincia",
+    ecoute_en_cours: "In ascolto",
+    details_techniques: "Dettagli tecnici",
+    hors_portee_grave: "Questa nota e troppo grave per il microfono",
+    hors_portee_aigu: "Questa nota e troppo acuta per il microfono",
+    micro_refuse: "Steady Pitch ha bisogno del microfono. Autorizzalo nel browser, poi tocca di nuovo il pulsante.",
+    demo_suite: "Questo e il livello 1 di 6. Il file completo apre gli altri cinque, trenta esercizi in tutto.",
+  },
+  pt: {
+    titre: "Steady Pitch", chantez: "Cante esta nota", jouez: "Toque esta nota",
+    excellent: "Perfeito", bien: "Bom", juste: "Afinado", faux: "Desafinado",
+    silence: "Nada ouvido", trop_grave: "Um pouco baixo", trop_aigu: "Um pouco alto",
+    score: "Pontuacao", niveau: "Nivel", reessayer: "Tentar de novo", suivant: "Proximo",
+    cents: "cents", choisir_voix: "Vou cantar", choisir_instrument: "Vou tocar",
+    progression: "Progresso",
+    sur: "de",
+    diese: "sustenido",
+    a_revoir: "Rever esta",
+    nouveau_niveau: "Novo nivel na proxima vez",
+    ecart_moyen: "Erro medio",
+    choisir_entree: "Como quer trabalhar a sua afinacao",
+    tessiture: "A sua tessitura",
+    tess_basse: "Baixo", tess_baryton: "Baritono", tess_tenor: "Tenor", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Crianca", tess_large: "Nao sei",
+    recommencer: "Recomecar",
+    ecoute_en_cours: "A escutar",
+    details_techniques: "Detalhes tecnicos",
+    hors_portee_grave: "Esta nota e demasiado grave para o microfone",
+    hors_portee_aigu: "Esta nota e demasiado aguda para o microfone",
+    micro_refuse: "Steady Pitch precisa do microfone. Autorize no navegador e toque outra vez no botao.",
+    demo_suite: "Este e o nivel 1 de 6. O ficheiro completo abre os outros cinco, trinta exercicios ao todo.",
+  },
+};
+
+/**
+ * UNE CLE INCONNUE NE DOIT PLUS RENDRE DU VIDE, ET C'EST UNE LECON DU CYCLE 12.
+ * Cette fonction rendait `undefined` en silence pour une cle qu'elle ne
+ * connait pas. Cote mobile, en TypeScript, le type `Cle` l'empeche a la
+ * compilation. Cote WEB, en JavaScript simple, il n'y a aucun filet, et
+ * l'ecran d'accueil est parti a l'ecran avec trois libelles VIDES sans que
+ * rien ne proteste, ni dans la console, ni dans un banc.
+ *
+ * Un texte manquant est desormais VISIBLE. Un defaut qu'on voit coute une
+ * minute, un defaut qui se cache coute un cycle. Le marqueur ne contient
+ * aucun symbole interdit dans une annonce vocale, il peut donc traverser la
+ * couche d'accessibilite sans la casser.
+ */
+function t(cle     , langue         = "en")         {
+  const valeur = (TEXTES[langue] ?? TEXTES.en)[cle] ?? TEXTES.en[cle];
+  if (typeof valeur !== "string" || valeur.length === 0) {
+    return `texte manquant, ${String(cle)}`;
+  }
+  return valeur;
+}
+
+/** Toutes les cles declarees, pour qu'un banc puisse verifier qu'une couche
+ *  d'interface n'en invente aucune. Sert au banc, et a rien d'autre. */
+function clesConnues()           {
+  return Object.keys(TEXTES.en);
+}
+
+/**
+ * LE NOM D'UNE NOTE, DIT A VOIX HAUTE, ET CE N'EST PAS LE MEME QUE L'ECRIT.
+ * Ajoute au cycle 11 apres qu'un banc a trouve le defaut. `nommerNote` rend
+ * "Do#3", et le diese est justement dans la liste des symboles que mon propre
+ * controle d'accessibilite interdit dans une annonce. Un lecteur d'ecran le lit
+ * "Do croisillon trois", ou l'ignore purement et simplement, ce qui est pire,
+ * parce que l'utilisateur entend alors "Do trois" et chante une autre note.
+ * L'allemand ecrit "Cis" et le do mobile "Di", ni l'un ni l'autre n'a de diese
+ * ecrit, cette fonction ne les touche donc pas.
+ */
+function nommerNoteParle(midi        , systeme               = "lettres",
+                                toniqueMidi = 0, langue         = "en")         {
+  const ecrit = nommerNote(midi, systeme, toniqueMidi);
+  if (!ecrit.includes("#")) return ecrit;
+  return ecrit.replace("#", " " + t("diese", langue) + " ");
+}
+
+/* pitch.js */
+/**
+ * pitch.ts - LE DETECTEUR DE HAUTEUR, EN TYPESCRIPT, POUR LE NAVIGATEUR.
+ * Agent N4, 2026-08-28 (cycle 12).
+ *
+ * POURQUOI CE FICHIER EXISTE.
+ * Sur iOS et Android, la detection est rendue par `react-native-pitchy`, un
+ * coeur C++ que je ne fais qu'appeler. Dans un NAVIGATEUR il n'y a pas de
+ * coeur C++, il n'y a que du JavaScript. Le web est la seule caisse qui coute
+ * zero et qui paie en jours plutot qu'en mois, voir
+ * `cerveau/recherche/rails-zero-euro-2026-08-28.md`, donc il faut ce fichier.
+ *
+ * CE QU'IL EST, EXACTEMENT.
+ * Un portage FIDELE de `pitchy::yinDetect`, c'est-a-dire de `cpp/yin-fft.cpp`
+ * du depot rnheroes/react-native-pitchy, licence MIT, lu le 2026-08-25. Il
+ * passe par le meme intermediaire que toutes mes mesures, le portage Python
+ * `cerveau/outils/pitch-sim.py`, sur lequel reposent mes 77 decisions justes
+ * sur 77 voix reelles.
+ *
+ * CE QUI LE PROUVE, ET C'EST LA SEULE CHOSE QUI COMPTE.
+ * `test-pitch.ts` rejoue 326 tampons de 2048 echantillons, dont 321 pris dans
+ * de VRAIES voix chantees et 5 fabriques muets, et compare hauteur et
+ * confiance a la reference Python nombre par nombre. Un portage non mesure
+ * contre sa reference est une reecriture au hasard.
+ *
+ * UNE DIFFERENCE ASSUMEE AVEC LA REFERENCE PYTHON, ET ELLE VA DANS LE BON SENS.
+ * Python utilisait la FFT de numpy comme substitut. Ici la FFT est ecrite a la
+ * main, en radix-2 iteratif, ce qui est EXACTEMENT ce que fait le C++ d'origine.
+ * Ce fichier est donc plus proche de la source que ne l'etait ma reference.
+ *
+ * ZERO DEPENDANCE, comme tout le reste du noyau.
+ */
+
+// ---------------------------------------------------------------------------
+// 1. FFT RADIX-2, ecrite a la main.
+// ---------------------------------------------------------------------------
+
+/** Plus petite puissance de deux superieure ou egale a n. */
+function prochainePuissanceDeDeux(n        )         {
+  let p = 1;
+  while (p < n) p *= 2;
+  return p;
+}
+
+/**
+ * FFT complexe en place, Cooley-Tukey radix-2 par decimation en temps.
+ * `re` et `im` font la meme longueur, qui DOIT etre une puissance de deux.
+ * `inverse` applique la transformation inverse SANS normaliser, la division
+ * par n est faite par l'appelant, comme dans la plupart des implementations.
+ */
+function fft(re              , im              , inverse         )       {
+  const n = re.length;
+  if (n <= 1) return;
+
+  // Permutation par inversion de bits.
+  for (let i = 1, j = 0; i < n; i++) {
+    let bit = n >> 1;
+    for (; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if (i < j) {
+      let t = re[i]; re[i] = re[j]; re[j] = t;
+      t = im[i]; im[i] = im[j]; im[j] = t;
+    }
+  }
+
+  const signe = inverse ? 1 : -1;
+  for (let longueur = 2; longueur <= n; longueur <<= 1) {
+    const angle = (signe * 2 * Math.PI) / longueur;
+    const wRe = Math.cos(angle);
+    const wIm = Math.sin(angle);
+    for (let i = 0; i < n; i += longueur) {
+      let curRe = 1.0;
+      let curIm = 0.0;
+      const demi = longueur >> 1;
+      for (let j = 0; j < demi; j++) {
+        const uRe = re[i + j];
+        const uIm = im[i + j];
+        const vRe = re[i + j + demi] * curRe - im[i + j + demi] * curIm;
+        const vIm = re[i + j + demi] * curIm + im[i + j + demi] * curRe;
+        re[i + j] = uRe + vRe;
+        im[i + j] = uIm + vIm;
+        re[i + j + demi] = uRe - vRe;
+        im[i + j + demi] = uIm - vIm;
+        const nRe = curRe * wRe - curIm * wIm;
+        curIm = curRe * wIm + curIm * wRe;
+        curRe = nRe;
+      }
+    }
+  }
+}
+
+/**
+ * Autocorrelation par FFT, la sequence exacte du C++.
+ * Bourrage de zeros jusqu'a `tailleFft`, FFT, spectre de puissance, FFT
+ * inverse. Rend la partie reelle.
+ */
+function autocorrelationParFft(buf                         ,
+                                      tailleFft        )               {
+  const re = new Float64Array(tailleFft);
+  const im = new Float64Array(tailleFft);
+  const n = Math.min(buf.length, tailleFft);
+  for (let i = 0; i < n; i++) re[i] = buf[i];
+
+  fft(re, im, false);
+
+  // Spectre de puissance, X * conj(X), donc reel et positif.
+  for (let i = 0; i < tailleFft; i++) {
+    const p = re[i] * re[i] + im[i] * im[i];
+    re[i] = p;
+    im[i] = 0.0;
+  }
+
+  fft(re, im, true);
+  for (let i = 0; i < tailleFft; i++) re[i] /= tailleFft;
+  return re;
+}
+
+// ---------------------------------------------------------------------------
+// 2. YIN, portage fidele
+// ---------------------------------------------------------------------------
+
+/** Constantes du C++, conservees telles quelles. Ne pas les regler ici sans
+ *  relancer `test-pitch.ts`, elles decident de toutes mes mesures. */
+const YIN_SEUIL_DEFAUT = 0.13;
+const YIN_BIAIS = 0.15;
+const YIN_FREQ_MIN = 65.41;
+const VOLUME_MIN_DEFAUT = -60.0;
+
+                            
+                                                          
+             
+                            
+                    
+ 
+
+/**
+ * Port de `pitchy::yinDetect`. Meme entree, meme sortie, memes constantes.
+ * `buf` est une fenetre d'echantillons entre -1 et 1.
+ */
+function yinDetect(
+  buf                         ,
+  frequenceEchantillonnage = 44100.0,
+  volumeMin = VOLUME_MIN_DEFAUT,
+  seuil = YIN_SEUIL_DEFAUT,
+)            {
+  const taille = buf.length;
+  if (taille < 4) return { hz: -1.0, confiance: 0.0 };
+
+  // Porte de volume. Sous ce niveau, on ne cherche pas de note dans du bruit
+  // de fond, ce qui evite de faire clignoter l'ecran dans le calme.
+  let somme = 0.0;
+  for (let i = 0; i < taille; i++) somme += buf[i] * buf[i];
+  const rms = Math.sqrt(somme / taille);
+  if (20.0 * Math.log10(rms + 1e-10) < volumeMin) {
+    return { hz: -1.0, confiance: 0.0 };
+  }
+
+  const tauMax = Math.floor(taille / 2);
+  const tailleFft = prochainePuissanceDeDeux(taille * 2);
+  const acf = autocorrelationParFft(buf, tailleFft);
+
+  const r0 = acf[0];
+
+  // Difference d, puis difference moyenne cumulee normalisee dPrime.
+  const d = new Float64Array(tauMax);
+  for (let tau = 0; tau < tauMax; tau++) {
+    const v = 2.0 * r0 - 2.0 * acf[tau];
+    d[tau] = v < 0 ? 0.0 : v;
+  }
+  d[0] = 0.0;
+
+  const dPrime = new Float64Array(tauMax);
+  dPrime.fill(1.0);
+  let cumul = d[0];
+  for (let tau = 1; tau < tauMax; tau++) {
+    cumul += d[tau];
+    dPrime[tau] = cumul > 0 ? (d[tau] * tau) / cumul : 1.0;
+  }
+
+  // Biais qui favorise les tau courts, exactement la formule du C++.
+  const biaise = new Float64Array(tauMax);
+  const denom = tauMax - 1;
+  for (let tau = 0; tau < tauMax; tau++) {
+    const biais = ((denom - tau) / denom) * YIN_BIAIS;
+    biaise[tau] = dPrime[tau] - biais;
+  }
+
+  const tauLimite = Math.min(
+    Math.trunc(frequenceEchantillonnage / YIN_FREQ_MIN), tauMax);
+
+  // Selection multi-candidats par lobes sous le seuil.
+  let meilleurTau = -1;
+  let meilleureValeur = Infinity;
+  let tau = 2;
+  while (tau < tauLimite) {
+    if (biaise[tau] - seuil < 0) {
+      let tauLobe = tau;
+      let valLobe = biaise[tau];
+      while (tau < tauLimite && biaise[tau] - seuil < 0) {
+        if (biaise[tau] < valLobe) {
+          valLobe = biaise[tau];
+          tauLobe = tau;
+        }
+        tau++;
+      }
+      if (valLobe < meilleureValeur) {
+        meilleureValeur = valLobe;
+        meilleurTau = tauLobe;
+      }
+    } else {
+      tau++;
+    }
+  }
+
+  // Repli quand aucun lobe ne passe sous le seuil. Le minimum global doit
+  // quand meme etre franchement marque, sinon on declare qu'on n'entend rien.
+  if (meilleurTau < 0) {
+    if (tauLimite <= 2) return { hz: -1.0, confiance: 0.0 };
+    let j = 2;
+    let minVal = biaise[2];
+    for (let k = 3; k < tauLimite; k++) {
+      if (biaise[k] < minVal) { minVal = biaise[k]; j = k; }
+    }
+    if (minVal >= 0.5) return { hz: -1.0, confiance: 0.0 };
+    meilleurTau = j;
+  }
+
+  // Interpolation parabolique sur la CMND NON biaisee. Le biais sert a
+  // choisir le lobe, jamais a affiner la position dans le lobe.
+  let affine = meilleurTau;
+  if (meilleurTau > 0 && meilleurTau < tauMax - 1) {
+    const x0 = dPrime[meilleurTau - 1];
+    const x1 = dPrime[meilleurTau];
+    const x2 = dPrime[meilleurTau + 1];
+    const a = (x0 + x2 - 2.0 * x1) / 2.0;
+    if (Math.abs(a) > 1e-12) {
+      const delta = -((x2 - x0) / 2.0) / (2.0 * a);
+      if (Math.abs(delta) < 1.0) affine = meilleurTau + delta;
+    }
+  }
+
+  if (affine <= 0) return { hz: -1.0, confiance: 0.0 };
+
+  const brut = dPrime[meilleurTau];
+  const confiance = 1.0 - Math.min(Math.max(brut, 0.0), 1.0);
+  return { hz: frequenceEchantillonnage / affine, confiance };
+}
+
+// ---------------------------------------------------------------------------
+// 3. L'AFFINAGE, AJOUTE LE 2026-08-31 (cycle 16)
+// ---------------------------------------------------------------------------
+
+/**
+ * POURQUOI CETTE FONCTION EXISTE, ET POURQUOI ELLE EST A COTE ET NON DEDANS.
+ *
+ * LE DEFAUT, MESURE. `yinDetect` lit systematiquement TROP HAUT, de un cent
+ * environ sur un la 440 et de pres de trente cents sur un son grave. Le biais
+ * est toujours positif, jamais negatif, ce qui designe une cause et pas du
+ * bruit.
+ *
+ * LA CAUSE. L'autocorrelation par FFT est BIAISEE. A l'ecart tau elle ne somme
+ * que les N moins tau echantillons qui se recouvrent, et elle divise quand
+ * meme par N. Elle decroit donc avec tau pour une raison purement arithmetique.
+ * Or la difference de YIN s'ecrit ici `2 r0 moins 2 acf`, formule qui suppose
+ * les deux termes de puissance egaux a r0. Ils ne le sont pas, la difference
+ * est donc surestimee d'autant plus que tau est grand, le minimum se deplace
+ * vers les tau COURTS, et un tau court veut dire une frequence haute. Cela
+ * explique le sens du biais et le fait qu'il grossisse dans le grave, ou tau
+ * est grand.
+ *
+ * POURQUOI JE NE CORRIGE PAS `yinDetect`. C'est un portage fidele de
+ * `pitchy::yinDetect`, et `test-pitch.ts` compare 326 tampons a la reference
+ * Python au dix-millieme de cent pres. Ce banc ne mesure pas la justesse, il
+ * mesure la FIDELITE du portage, et c'est sa raison d'etre. Le corriger dedans
+ * ferait passer 326 epreuves au rouge et me priverait du seul controle qui
+ * m'avertirait d'une derive future. La correction vient donc APRES, elle a son
+ * propre banc, et elle se mesure en cents contre des frequences connues.
+ *
+ * CE QU'ELLE FAIT. Elle repart de l'estimation grossiere, et recalcule la
+ * VRAIE difference de YIN sur une poignee d'ecarts autour d'elle, avec une
+ * fenetre de comparaison de longueur CONSTANTE. Longueur constante veut dire
+ * que le biais ci-dessus ne peut plus exister, chaque tau est evalue sur
+ * exactement le meme nombre de termes.
+ */
+
+/**
+ * Le rayon de recherche, en PART DE LA PERIODE et non en echantillons.
+ *
+ * PREMIERE VERSION, TROIS ECHANTILLONS, ET SON ECHEC MESURE. Le biais a
+ * corriger vaut jusqu'a trente cents, ce qui fait NEUF echantillons sur un mi
+ * grave et moins d'un sur un la aigu. Un rayon fixe rate donc exactement les
+ * cas pour lesquels il a ete ecrit, et le banc l'a montre, la sinusoide a
+ * 82 Hz ressortait inchangee.
+ *
+ * Quatre pour cent de la periode couvrent soixante-dix cents de part et
+ * d'autre, largement de quoi rattraper le pire biais mesure. Et cela reste
+ * loin du minimum concurrent le plus proche, qui est a la moitie ou au double
+ * de la periode, donc l'affinage ne peut pas changer de note en chemin.
+ */
+const AFFINAGE_PART = 0.04;
+const AFFINAGE_RAYON_MIN = 3;
+
+/**
+ * Affine une hauteur deja trouvee. Rend la hauteur affinee, ou la hauteur
+ * d'entree telle quelle quand elle sort de ce que la fenetre permet de mesurer.
+ */
+function affinerHauteur(
+  buf                                        ,
+  hz        ,
+  frequenceEchantillonnage = 44100.0,
+)         {
+  if (hz <= 0) return hz;
+
+  const n = buf.length;
+  const tauCentre = frequenceEchantillonnage / hz;
+  // La fenetre de comparaison. Constante pour tous les tau, c'est tout
+  // l'objet de cette fonction.
+  const largeur = n >> 1;
+  const rayon = Math.max(AFFINAGE_RAYON_MIN, Math.round(tauCentre * AFFINAGE_PART));
+  const tauMin = Math.max(1, Math.floor(tauCentre) - rayon);
+  const tauMax = Math.min(n - largeur, Math.ceil(tauCentre) + rayon);
+  if (tauMax - tauMin < 2) return hz;
+
+  const d = new Float64Array(tauMax - tauMin + 1);
+  for (let tau = tauMin; tau <= tauMax; tau++) {
+    let somme = 0.0;
+    for (let j = 0; j < largeur; j++) {
+      const ecart = buf[j] - buf[j + tau];
+      somme += ecart * ecart;
+    }
+    d[tau - tauMin] = somme;
+  }
+
+  let creux = 0;
+  for (let i = 1; i < d.length; i++) if (d[i] < d[creux]) creux = i;
+
+  // Un minimum sur un bord n'est pas un minimum, c'est une pente qui sort de
+  // la fenetre. On rend alors l'estimation d'origine plutot qu'un chiffre
+  // fabrique par une interpolation sans point a droite ou a gauche.
+  if (creux === 0 || creux === d.length - 1) return hz;
+
+  let tauAffine = tauMin + creux;
+  const a = (d[creux - 1] + d[creux + 1] - 2 * d[creux]) / 2;
+  if (Math.abs(a) > 1e-12) {
+    const delta = -((d[creux + 1] - d[creux - 1]) / 2) / (2 * a);
+    if (Math.abs(delta) < 1.0) tauAffine += delta;
+  }
+
+  return tauAffine > 0 ? frequenceEchantillonnage / tauAffine : hz;
+}
+
+/* micro-web.js */
+/**
+ * micro-web.js - LE SEUL FICHIER DE LA VERSION WEB QUI TOUCHE AU MATERIEL.
+ * Agent N4, 2026-08-28 (cycle 12).
+ *
+ * Il joue exactement le role de `src/micro.ts` cote application mobile, et il
+ * est ecrit avec la meme discipline. Il ne juge rien, il ne nomme aucune note,
+ * il ne connait aucun exercice. Il ouvre un microphone, accumule des fenetres,
+ * les passe au detecteur et rend un tableau de trames au noyau, qui decide.
+ *
+ * QUATRE PIEGES DU NAVIGATEUR, ET LE QUATRIEME M'A COUTE UNE SEANCE ENTIERE.
+ *
+ * 1. LA FREQUENCE D'ECHANTILLONNAGE N'EST PAS 44 100 Hz. Le navigateur prend
+ *    celle du materiel. Mesure du 2026-08-28 sur cette machine, 48 000 Hz,
+ *    donc 42,67 ms par trame et non 46,4. Toutes mes mesures de justesse sont
+ *    faites a 44 100, et ma duree d'attaque est exprimee en millisecondes. Une
+ *    constante en dur ici fausserait le reglage de neuf pour cent. On lit donc
+ *    la frequence REELLE et on en deduit la duree de trame.
+ *
+ * 2. LE NAVIGATEUR VEUT AMELIORER LE SON, ET CELA DETRUIRAIT LA MESURE.
+ *    Suppression de bruit, controle automatique de gain, annulation d'echo,
+ *    concus pour la parole au telephone. Ils ecrasent la dynamique et
+ *    deforment le spectre. Les trois sont coupes explicitement.
+ *
+ * 3. LE CONTEXTE AUDIO DEMARRE SUSPENDU. Un navigateur refuse de produire du
+ *    son avant un geste de l'utilisateur. On le reprend a la preparation, qui
+ *    part toujours d'un clic.
+ *
+ * 4. UN CONTEXTE AUDIO PAR TENTATIVE FAIT PERDRE LE DEBUT DE LA TENTATIVE.
+ *    C'est le defaut que la premiere seance jouee en navigateur a revele, le
+ *    2026-08-28. Ma premiere version creait un AudioContext a chaque ecoute
+ *    et le fermait a la fin. Resultat mesure, QUATRE tentatives sur NEUF
+ *    rendaient ZERO trame en cinq cents millisecondes, et le produit
+ *    repondait "rien entendu" a quelqu'un qui chantait juste. Le pire verdict
+ *    possible, celui qui accuse l'utilisateur d'un defaut du logiciel.
+ *    Le contexte et le worklet sont desormais crees UNE FOIS et gardes
+ *    vivants toute la seance. Une ecoute ne fait plus que brancher la source
+ *    et vider un tampon. Aucune relecture ne pouvait trouver ce defaut, seule
+ *    une seance jouee pour de vrai.
+ */
+
+/** La taille de fenetre du produit. La MEME que sur mobile, 2048. Toutes mes
+ *  mesures de justesse sont faites sur cette taille et sur aucune autre. */
+const TAILLE_FENETRE = 2048;
+
+/** Le niveau sous lequel on ne cherche pas de note. Le meme qu'en mobile. */
+const VOLUME_MIN = -60;
+
+/** Le code du worklet, ecrit ici plutot que dans un fichier a part, pour que
+ *  le site reste un dossier de fichiers statiques sans surprise de chemin. */
+const CODE_WORKLET = `
+class Collecteur extends AudioWorkletProcessor {
+  constructor(options) {
+    super();
+    this.taille = options.processorOptions.taille;
+    this.tampon = new Float32Array(this.taille);
+    this.remplis = 0;
+  }
+  process(entrees) {
+    const canal = entrees[0] && entrees[0][0];
+    if (!canal) return true;
+    for (let i = 0; i < canal.length; i++) {
+      this.tampon[this.remplis++] = canal[i];
+      if (this.remplis === this.taille) {
+        this.port.postMessage(this.tampon.slice());
+        this.remplis = 0;
+      }
+    }
+    return true;
+  }
+}
+registerProcessor('collecteur', Collecteur);
+`;
+
+// ---------------------------------------------------------------------------
+// L'ETAT PERSISTANT. Cree une fois, garde vivant. Voir le piege n4.
+// ---------------------------------------------------------------------------
+let contexte = null;
+let noeud = null;
+let mode = null;
+let fluxMicro = null;
+/** Le receveur courant des fenetres. Change a chaque ecoute, ce qui evite de
+ *  brancher et debrancher le worklet et de perdre le debut du son. */
+let receveur = null;
+
+/**
+ * Prepare le contexte audio et le worklet, une seule fois.
+ * `avecMicro` a faux prepare la chaine sans demander le microphone, ce qui
+ * sert au banc en navigateur pilote, qui n'a pas de microphone.
+ */
+async function preparer(avecMicro = true) {
+  if (contexte && contexte.state !== "closed") {
+    if (contexte.state === "suspended") await contexte.resume();
+    if (avecMicro && !fluxMicro) await brancherMicro();
+    return { frequence: contexte.sampleRate, mode };
+  }
+
+  contexte = new (window.AudioContext || window.webkitAudioContext)();
+  if (contexte.state === "suspended") await contexte.resume();
+
+  try {
+    const url = URL.createObjectURL(
+      new Blob([CODE_WORKLET], { type: "application/javascript" }));
+    await contexte.audioWorklet.addModule(url);
+    URL.revokeObjectURL(url);
+    noeud = new AudioWorkletNode(contexte, "collecteur", {
+      numberOfInputs: 1,
+      numberOfOutputs: 0,
+      processorOptions: { taille: TAILLE_FENETRE },
+    });
+    noeud.port.onmessage = (e) => { if (receveur) receveur(e.data); };
+    mode = "worklet";
+  } catch {
+    // REPLI. Certains navigateurs n'ont pas de worklet. Le noeud de traitement
+    // est deprecie mais il fonctionne partout, et un produit qui refuse de
+    // s'ouvrir vaut moins qu'un produit qui utilise une vieille API.
+    mode = "repli";
+    noeud = contexte.createScriptProcessor(TAILLE_FENETRE, 1, 1);
+    noeud.onaudioprocess = (e) => {
+      if (receveur) receveur(e.inputBuffer.getChannelData(0).slice());
+    };
+    // Le noeud deprecie ne s'execute que s'il est relie a une sortie. On le
+    // relie a un gain nul, sinon l'utilisateur s'entendrait dans ses enceintes
+    // et le microphone reprendrait sa propre sortie.
+    const muet = contexte.createGain();
+    muet.gain.value = 0;
+    noeud.connect(muet);
+    muet.connect(contexte.destination);
+  }
+
+  if (avecMicro) await brancherMicro();
+  await degourdir();
+  return { frequence: contexte.sampleRate, mode, msDeChauffe };
+}
+
+/** Combien de millisecondes la premiere ouverture du materiel a coute. Zero
+ *  ensuite. Publie par `diagnostic` pour que ce ne soit jamais une croyance. */
+let msDeChauffe = 0;
+
+/**
+ * ATTENDRE QUE LE GRAPHE BATTE VRAIMENT, ET NON QU'IL SOIT CONSTRUIT.
+ *
+ * LE DEFAUT, MESURE AU NAVIGATEUR PILOTE LE 2026-08-28. La toute premiere
+ * ecoute de la vie du navigateur a rendu ZERO trame en sept cents
+ * millisecondes, alors que `preparer` avait deja rendu la main. Les ecoutes
+ * suivantes, et meme la premiere apres un rechargement de page, n'en perdent
+ * que quatre-vingt-cinq. Ce n'est donc pas le chargement du worklet, c'est
+ * l'OUVERTURE DU MATERIEL AUDIO, qui n'arrive qu'une fois par processus.
+ *
+ * POURQUOI JE NE LE LAISSE PAS PASSER. C'est une fois par utilisateur, et
+ * c'est exactement la premiere note qu'il chante. Mon marche entier repose
+ * sur le fait que les concurrents n'entendent pas leurs acheteurs, et le
+ * premier avis d'un acheteur qui n'a pas ete entendu dit toujours la meme
+ * chose. Sept cents millisecondes au mauvais moment coutent plus cher qu'une
+ * erreur de dix cents pendant une heure.
+ *
+ * LA PARADE. Une source SILENCIEUSE est branchee sur le collecteur, et on
+ * attend une vraie trame avant de rendre la main. Elle est silencieuse parce
+ * qu'un utilisateur ne doit rien entendre, et il faut quand meme une source,
+ * car un noeud sans entree branchee n'est pas cadence par le navigateur.
+ */
+async function degourdir() {
+  if (msDeChauffe > 0 || !noeud) return;
+  const depart = performance.now();
+
+  const silence = contexte.createConstantSource();
+  silence.offset.value = 0;
+  silence.connect(noeud);
+  silence.start();
+
+  await new Promise((resoudre) => {
+    // Un delai de garde, parce qu'un materiel muet ne doit pas bloquer
+    // l'ouverture de la seance. Mieux vaut demarrer sourd que ne pas demarrer.
+    const garde = setTimeout(fini, 1500);
+    const precedent = receveur;
+    function fini() {
+      clearTimeout(garde);
+      receveur = precedent;
+      try { silence.stop(); silence.disconnect(); } catch { /* deja arrete */ }
+      resoudre();
+    }
+    receveur = () => fini();
+  });
+
+  msDeChauffe = Math.round(performance.now() - depart);
+}
+
+async function brancherMicro() {
+  fluxMicro = await navigator.mediaDevices.getUserMedia({
+    audio: {
+      // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      channelCount: 1,
+    },
+  });
+  contexte.createMediaStreamSource(fluxMicro).connect(noeud);
+}
+
+/**
+ * Ouvre une ecoute. Rend un objet dont `arreter` clot la tentative et rend les
+ * trames accumulees, exactement comme la version mobile.
+ *
+ * `surTrame` permet a l'ecran de bouger le curseur en direct, sans que ce
+ * fichier sache ce qu'est un curseur.
+ *
+ * `sourceDeTest`, une frequence en hertz, remplace le microphone par un son
+ * de synthese riche. Voir la note sur le banc plus bas.
+ */
+async function ecouter(surTrame, sourceDeTest = null) {
+  await preparer(sourceDeTest === null);
+
+  const frequence = contexte.sampleRate;
+  // LA DUREE D'UNE TRAME, DEDUITE ET NON SUPPOSEE. Voir le piege n1.
+  const msParTrame = (TAILLE_FENETRE / frequence) * 1000;
+
+  const trames = [];
+  let vivant = true;
+  const aArreter = [];
+
+  // LE BANC EN NAVIGATEUR, ET POURQUOI IL VIT DANS LE FICHIER DE PRODUIT.
+  // Ce fichier est le seul de la version web que je ne peux pas eprouver en
+  // Node, faute d'AudioContext. Il faut donc l'eprouver DANS un navigateur, et
+  // un navigateur pilote par machine n'a pas de microphone. En remplacant la
+  // seule source par un son de frequence connue, tout le reste de la chaine
+  // est parcouru pour de vrai, worklet compris, a la vraie frequence du
+  // materiel. Ce que ce mode NE prouve PAS, et je le dis, c'est la capture
+  // elle-meme, le gain d'entree et la latence du bus audio.
+  if (sourceDeTest !== null) {
+    // Un son HARMONIQUEMENT RICHE, pas une sinusoide. La mesure du 2026-08-28
+    // montre que YIN lit une sinusoide jusqu'a trente cents trop haut dans le
+    // grave. Un banc bati sur une sinusoide mesurerait ce biais au lieu de
+    // mesurer la chaine audio.
+    const melange = contexte.createGain();
+    melange.gain.value = 0.28;
+    for (let h = 1; h <= 6; h++) {
+      const osc = contexte.createOscillator();
+      osc.type = "sine";
+      osc.frequency.value = sourceDeTest * h;
+      const g = contexte.createGain();
+      g.gain.value = 1 / h;
+      osc.connect(g);
+      g.connect(melange);
+      osc.start();
+      aArreter.push(osc);
+    }
+    melange.connect(noeud);
+    aArreter.push({ stop: () => melange.disconnect() });
+  }
+
+  receveur = (echantillons) => {
+    if (!vivant) return;
+    const r = yinDetect(echantillons, frequence, VOLUME_MIN);
+    // L'AFFINAGE, AJOUTE LE 2026-08-31. Le detecteur lit systematiquement trop
+    // haut, d'un cent sur un la et de trente dans le grave, pour une raison
+    // arithmetique expliquee dans `affinerHauteur`. Sans cette ligne le
+    // moniteur de la page d'accueil et l'entrainement diraient deux nombres
+    // differents sur la meme note tenue, et un eleve qui voit ca ne croit plus
+    // aucun des deux.
+    const trame = {
+      hz: r.hz > 0 ? affinerHauteur(echantillons, r.hz, frequence) : r.hz,
+      confiance: r.confiance,
+    };
+    trames.push(trame);
+    if (surTrame) surTrame(trame);
+  };
+
+  return {
+    frequence,
+    msParTrame,
+    mode,
+    get nbTrames() { return trames.length; },
+    async arreter() {
+      vivant = false;
+      receveur = null;
+      for (const o of aArreter) { try { o.stop(); } catch { /* deja arrete */ } }
+      // LE CONTEXTE RESTE VIVANT. C'est tout l'objet de la correction du
+      // piege n4. Le fermer ici couterait le debut de la tentative suivante.
+      return trames;
+    },
+  };
+}
+
+/** Libere le materiel. A appeler quand l'utilisateur quitte la seance, pas
+ *  entre deux notes. Le voyant du microphone s'eteint ici et nulle part
+ *  ailleurs, ce qui est aussi une question de confiance. */
+async function liberer() {
+  receveur = null;
+  if (fluxMicro) {
+    for (const piste of fluxMicro.getTracks()) piste.stop();
+    fluxMicro = null;
+  }
+  if (contexte && contexte.state !== "closed") {
+    try { await contexte.close(); } catch { /* deja ferme */ }
+  }
+  contexte = null;
+  noeud = null;
+  mode = null;
+  // La chauffe est un fait du CONTEXTE, pas du processus. Un contexte ferme
+  // puis rouvert se rechauffe, donc le compteur repart. L'oublier ici ferait
+  // sauter la parade a la seance suivante, en silence.
+  msDeChauffe = 0;
+}
+
+/**
+ * Le microphone est-il seulement accessible ici. Un site servi en clair, hors
+ * de localhost, n'y a PAS droit, et le message d'erreur du navigateur ne le
+ * dit pas clairement. Autant le dire nous-memes.
+ */
+function diagnostic() {
+  const secure = window.isSecureContext === true;
+  const api = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  return {
+    contexteSecurise: secure,
+    apiPresente: api,
+    utilisable: secure && api,
+    prepare: !!contexte,
+    frequence: contexte ? contexte.sampleRate : null,
+    mode,
+    msDeChauffe,
+    raison: !api
+      ? "ce navigateur n'expose pas l'acces au microphone"
+      : !secure
+        ? "le microphone exige une page servie en HTTPS, ou en local"
+        : "",
+  };
+}
+
+/**
+ * Joue une note de reference dans les enceintes, et rend la main quand elle
+ * s'est TUE. Ajoute le 2026-09-04 (cycle 19) pour le test d'appariement, qui
+ * doit faire entendre une cible avant de demander a l'utilisateur de la
+ * chanter.
+ *
+ * POURQUOI ELLE ATTEND LA FIN, ET C'EST TOUT L'INTERET. Si l'ecoute demarrait
+ * pendant que la note sonne, le microphone entendrait MA note et le detecteur
+ * annoncerait un appariement parfait pour tout le monde, y compris pour
+ * quelqu'un qui n'a pas ouvert la bouche. Un test qui felicite le silence ne
+ * mesure rien. L'appelant enchaine donc sur l'ecoute APRES cette promesse.
+ *
+ * La rampe finale n'est pas une coquetterie. Un oscillateur coupe net produit
+ * un clic large bande, et ce clic tombe pile au moment ou l'ecoute commence.
+ */
+async function jouerNote(hz, ms = 1600) {
+  await preparer(false);
+
+  const sortie = contexte.createGain();
+  const maintenant = contexte.currentTime;
+  const fin = maintenant + ms / 1000;
+
+  // Un timbre un peu riche s'entend mieux qu'une sinusoide sur un haut-parleur
+  // d'ordinateur portable, ou le grave passe mal.
+  const oscillateurs = [];
+  for (const [rang, poids] of [[1, 1], [2, 0.32], [3, 0.12]]) {
+    const osc = contexte.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = hz * rang;
+    const gain = contexte.createGain();
+    gain.gain.value = poids;
+    osc.connect(gain);
+    gain.connect(sortie);
+    oscillateurs.push(osc);
+  }
+
+  sortie.gain.setValueAtTime(0.0001, maintenant);
+  sortie.gain.exponentialRampToValueAtTime(0.22, maintenant + 0.03);
+  sortie.gain.setValueAtTime(0.22, fin - 0.08);
+  sortie.gain.exponentialRampToValueAtTime(0.0001, fin);
+  sortie.connect(contexte.destination);
+
+  for (const osc of oscillateurs) { osc.start(maintenant); osc.stop(fin + 0.02); }
+
+  await new Promise((resoudre) => setTimeout(resoudre, ms + 60));
+  try { sortie.disconnect(); } catch { /* deja detache */ }
+}
+
+/* oreille-ui.js */
+/**
+ * oreille-ui.js, L'ECRAN DU TEST D'APPARIEMENT DE HAUTEUR.
+ * Agent N4, 2026-09-04 (cycle 19).
+ *
+ * CE QUE CE TEST MESURE, ET C'EST LA SEULE CHOSE QUI LE DISTINGUE DU RAYON.
+ * Les tests `tone deaf` du web font entendre DEUX sons et demandent s'ils sont
+ * differents. C'est un test de PERCEPTION, et il est repondu correctement par
+ * la quasi-totalite des gens qui se croient sourds aux sons. Le vrai probleme
+ * de ces gens est la PRODUCTION, entendre la cible et ne pas savoir poser sa
+ * voix dessus. Personne ne le mesure, parce que le mesurer demande un
+ * detecteur de hauteur et pas un questionnaire.
+ *
+ * L'OCTAVE EST TRAITEE COMME UNE REUSSITE, ET C'EST DELIBERE. Un homme a qui
+ * l'on joue un la 4 chante tres souvent un la 3, ce qui est la BONNE note dans
+ * sa voix. Un test qui compte ca comme une faute dit a des gens justes qu'ils
+ * sont faux, et c'est exactement le mensonge que je reproche aux autres. On
+ * replie donc sur l'octave la plus proche avant de noter, et on compte les
+ * replis a part, parce que c'est une information et non un echec.
+ *
+ * CE QU'IL EXPOSE POUR LE BANC, `window.__oreille`. Meme raison que pour le
+ * test d'etendue, lire un etat coute une ligne, le deduire d'un dessin coute
+ * vingt minutes.
+ */
+
+const REGLAGES_OREILLE = {
+  /**
+   * En deca, la trame est du souffle ou du bruit, pas une note tenue.
+   *
+   * CE CHIFFRE EST CELUI DU TEST D'ETENDUE, ET J'AI PAYE POUR L'APPRENDRE.
+   * J'avais d'abord ecrit 0,82, choisi au jugé parce que ca sonnait exigeant.
+   * La confiance rendue par YIN BAISSE QUAND LA NOTE DESCEND, mecaniquement,
+   * parce qu'une fenetre de 2048 echantillons contient de moins en moins de
+   * periodes. Mesure au banc en navigateur, sur un son parfait.
+   *
+   *     220 Hz   confiance 0,894     75 trames sur 75 retenues
+   *     165 Hz   confiance 0,858     74 sur 75
+   *     131 Hz   confiance 0,820     36 sur 75
+   *     110 Hz   confiance 0,789     ZERO sur 75
+   *
+   * A 0,82 le test rendait donc `no held note` a tout homme chantant sous un
+   * do 3, c'est-a-dire a la moitie grave de son public, ET precisement dans le
+   * cas dont la page fait son argument, chanter la bonne note une octave plus
+   * bas. Un seuil invente vaut moins qu'un seuil deja eprouve contre de vraies
+   * voix, et celui-la l'est.
+   */
+  confianceMin: 0.55,
+  /** Duree d'ecoute par note, en millisecondes. */
+  msEcoute: 3200,
+  /** Duree de la note de reference. */
+  msReference: 1500,
+  /** On jette le debut de l'ecoute, le temps que la voix se pose. */
+  msAmorce: 700,
+  /** Sans au moins ce nombre de trames sures, la tentative ne compte pas. */
+  tramesMin: 8,
+};
+
+/**
+ * LES CIBLES. Six notes, jamais dans l'ordre, parce qu'une suite qui monte se
+ * chante de proche en proche et mesurerait l'intervalle plutot que la note.
+ * Les degres sont donnes en demi-tons au-dessus de la base choisie.
+ */
+const DEGRES = [0, 7, 3, 10, 5, 2];
+
+/** Les deux bases, en MIDI. La 2 pour les voix graves, la 3 pour les aigues. */
+const BASES = { grave: 45, aigu: 57 };
+
+const etat = {
+  etape: "accueil",
+  base: null,
+  tour: 0,
+  resultats: [],
+  ecoute: null,
+};
+
+/**
+ * CE QUI EST EXPOSE, ET POURQUOI CE N'EST PAS QUE L'ETAT. La notation est la
+ * seule partie de ce fichier qui puisse etre fausse SANS QUE RIEN NE SE VOIE.
+ * Un ecran casse saute aux yeux, un verdict de travers a l'air d'un verdict.
+ * On la sort donc pour qu'un banc puisse la juger hors navigateur.
+ */
+window.__oreille = etat;
+window.__oreilleNotation = { noterAppariement, composerBilan, hauteurRetenue, verdictDe };
+
+/**
+ * LE BANC EN NAVIGATEUR. Il remplace le microphone par un son de frequence
+ * CONNUE et fait tourner tout le reste pour de vrai, worklet compris, a la
+ * vraie frequence d'echantillonnage du materiel.
+ *
+ * Sans lui, la seule facon d'eprouver la chaine de mesure serait de chanter
+ * dans un navigateur pilote, qui n'a pas de microphone. Le banc hors
+ * navigateur, lui, ne juge que la notation, en lui donnant des trames que
+ * j'ai ecrites moi-meme. Entre les deux il reste le detecteur et le transport
+ * audio, et c'est precisement la que le cycle 16 avait cache sa faute.
+ *
+ * CE QU'IL NE PROUVE PAS, et je prefere l'ecrire, la capture elle-meme, le
+ * gain d'entree et la latence du bus audio.
+ */
+window.__oreilleBanc = async function (hzSource, cibleMidi) {
+  const ecoute = await ecouter(null, hzSource);
+  await new Promise((resoudre) => setTimeout(resoudre, REGLAGES_OREILLE.msEcoute));
+  const trames = await ecoute.arreter();
+  const hz = hauteurRetenue(trames, ecoute.msParTrame);
+  await liberer();
+  const confiances = trames.map((t) => t.confiance).sort((a, b) => a - b);
+  return {
+    trames: trames.length,
+    hzRetenu: hz,
+    // La confiance sert a comprendre un `null`. Sans elle, une tentative non
+    // notee ne dit pas si l'utilisateur s'est tu ou si le detecteur a doute.
+    confianceMediane: confiances.length ? confiances[Math.floor(confiances.length / 2)] : null,
+    confianceHaute: confiances.length ? confiances[confiances.length - 1] : null,
+    surLeSeuil: trames.filter((t) => t.hz > 0 && t.confiance >= REGLAGES_OREILLE.confianceMin).length,
+    note: hz === null ? null : noterAppariement(hz, midiVersHz(cibleMidi)),
+  };
+};
+
+function elt(id) {
+  const noeud = document.getElementById(id);
+  if (!noeud) throw new Error(`element absent, ${id}`);
+  return noeud;
+}
+
+function montrer(id, visible) {
+  elt(id).hidden = !visible;
+}
+
+/**
+ * POUR LES SEULS ELEMENTS QUE LA COPIE HORS LIGNE RETIRE.
+ *
+ * `emballer-oreille.mjs` coupe le paragraphe de vente, parce qu'on n'argumente
+ * pas un prix aupres de quelqu'un qui a deja paye. Le code de l'ecran, lui,
+ * continuait de le masquer ou de le montrer selon le verdict, et `elt` leve
+ * quand l'element n'est pas la. **Le fichier vendu plantait donc sur l'ecran de
+ * resultat, c'est-a-dire chez le seul utilisateur qui ait sorti sa carte.**
+ *
+ * On ne rend pas `elt` tolerant pour autant. Ailleurs, un identifiant absent
+ * est une faute de frappe et doit crier. Ici seulement, l'absence est prevue.
+ */
+function montrerSiPresent(id, visible) {
+  const noeud = document.getElementById(id);
+  if (noeud) noeud.hidden = !visible;
+}
+
+const cibleDuTour = (tour) => BASES[etat.base] + DEGRES[tour];
+
+// ---------------------------------------------------------------------------
+// LA NOTATION D'UNE TENTATIVE
+// ---------------------------------------------------------------------------
+
+/**
+ * Rend la hauteur retenue pour une tentative, ou null si l'utilisateur n'a
+ * rien chante d'exploitable.
+ *
+ * ON PREND LA MEDIANE ET NON LA MOYENNE. Une seule trame parasite a une
+ * octave de distance deplacerait une moyenne de plusieurs centaines de cents,
+ * et le debut d'une note chantee est presque toujours une glissade vers la
+ * cible. La mediane ignore les deux.
+ */
+function hauteurRetenue(trames, msParTrame) {
+  const aJeter = Math.floor(REGLAGES_OREILLE.msAmorce / msParTrame);
+  const sures = trames
+    .slice(aJeter)
+    .filter((t) => t.hz > 0 && t.confiance >= REGLAGES_OREILLE.confianceMin)
+    .map((t) => t.hz);
+
+  if (sures.length < REGLAGES_OREILLE.tramesMin) return null;
+  return mediane(sures);
+}
+
+/**
+ * Note une tentative contre sa cible. `replie` dit que l'utilisateur a chante
+ * la bonne note dans une autre octave, ce qui n'est pas une faute.
+ */
+function noterAppariement(hzChante, cibleHz) {
+  const replie = replierOctave(hzChante, cibleHz);
+  const octaves = Math.round(Math.log2(replie / hzChante));
+  return {
+    hzChante,
+    hzReplie: replie,
+    cibleHz,
+    ecartCents: cents(replie, cibleHz),
+    octavesDeplacees: octaves,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// LE VERDICT D'ENSEMBLE
+// ---------------------------------------------------------------------------
+
+/**
+ * LES SEUILS, ET D'OU ILS SORTENT. Un demi-ton fait cent cents. Un chanteur
+ * entraine tient une note a mieux que dix cents, un adulte non entraine mais
+ * juste tourne autour de vingt-cinq, et au-dela d'un demi-ton l'auditeur
+ * entend une fausse note plutot qu'une note un peu basse. Ce sont des reperes
+ * d'usage, pas un diagnostic, et la page le dit en toutes lettres.
+ */
+function verdictDe(ecartMedian, tentativesValides) {
+  if (tentativesValides === 0) return "RIEN";
+  if (ecartMedian < 25) return "JUSTE";
+  if (ecartMedian < 50) return "ORDINAIRE";
+  if (ecartMedian < 100) return "APPROXIMATIF";
+  return "LOIN";
+}
+
+const TEXTE_VERDICT = {
+  JUSTE: "You match pitch accurately.",
+  ORDINAIRE: "You match pitch about as well as most untrained singers.",
+  APPROXIMATIF: "You are finding the notes, but not landing on them.",
+  LOIN: "Your attempts did not line up with the targets.",
+  RIEN: "Not enough held sound to score.",
+};
+
+/**
+ * CE QU'ON PROPOSE APRES LE VERDICT, ET CE N'EST PAS LE MEME TEXTE POUR TOUS.
+ *
+ * Le moment ou quelqu'un vient d'apprendre un chiffre sur sa propre voix est le
+ * seul de la page ou il a une raison de vouloir la suite. Lui servir la meme
+ * phrase de vente qu'il ait ete a huit cents ou a deux cents serait
+ * malhonnete, et se verrait.
+ *
+ * Celui qui est deja juste n'a rien a corriger, on ne lui vend pas une
+ * correction. Celui qui n'a rien produit d'exploitable a un probleme de
+ * materiel ou de consigne, et lui proposer un achat a ce moment-la serait
+ * profiter d'une mesure ratee.
+ */
+const SUITE = {
+  JUSTE: {
+    titre: "You do not need fixing, so here is the honest next thing.",
+    texte: "Matching a note you have just heard is the easy half. Holding it "
+      + "through a phrase, and finding it without a reference first, are the "
+      + "parts that take work. That is what the trainer drills.",
+  },
+  ORDINAIRE: {
+    titre: "This is the range where practice moves the number fastest.",
+    texte: "You are landing near the notes and not on them, which is the most "
+      + "common result and the most responsive to work. What changes it is "
+      + "short sessions with feedback on every attempt rather than long ones.",
+  },
+  APPROXIMATIF: {
+    titre: "You are hearing the notes. The gap is in landing on them.",
+    texte: "That gap closes with immediate feedback, because the correction has "
+      + "to arrive while the note is still sounding. Being told afterwards that "
+      + "you were flat teaches almost nothing.",
+  },
+  LOIN: {
+    titre: "Before concluding anything, rule out the boring explanations.",
+    texte: "A noisy room, a distant microphone, or singing while the reference "
+      + "note is still playing will all produce this. Try once more with "
+      + "headphones. If it holds up, start from single held notes with a "
+      + "reference sounding next to you rather than from songs.",
+  },
+  RIEN: {
+    titre: "Nothing was measured, so there is nothing to conclude.",
+    texte: "The page needs a note held for about a second to score it. Sing an "
+      + "open ah out loud rather than humming, and check that the browser is "
+      + "using the microphone you think it is.",
+  },
+};
+
+function composerBilan(resultats) {
+  const valides = resultats.filter((r) => r !== null);
+  const ecarts = valides.map((r) => Math.abs(r.ecartCents));
+  const ecartMedian = ecarts.length ? mediane(ecarts) : 0;
+  const signes = valides.map((r) => r.ecartCents);
+  const replis = valides.filter((r) => r.octavesDeplacees !== 0).length;
+
+  // UN BIAIS CONSTANT EST UNE AUTRE MALADIE QU'UNE DISPERSION. Quelqu'un qui
+  // est bas de trente cents SUR TOUTES les notes s'entend et se corrige en une
+  // seance. Quelqu'un qui est a plus ou moins trente au hasard a un tout autre
+  // probleme. On ne peut pas les distinguer avec une valeur absolue seule.
+  const biais = signes.length ? mediane(signes) : 0;
+  const biaisNet = Math.abs(biais) > 15 && signes.every((s) => Math.sign(s) === Math.sign(biais));
+
+  return {
+    tentatives: resultats.length,
+    valides: valides.length,
+    ecartMedian,
+    biais,
+    biaisNet,
+    replis,
+    verdict: verdictDe(ecartMedian, valides.length),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// LE DEROULEMENT
+// ---------------------------------------------------------------------------
+
+async function jouerUnTour() {
+  const cibleMidi = cibleDuTour(etat.tour);
+  const cibleHz = midiVersHz(cibleMidi);
+
+  elt("or-etape").textContent =
+    `Note ${etat.tour + 1} of ${DEGRES.length}`;
+  elt("or-cible").textContent = nommerNote(cibleMidi, "lettres");
+
+  elt("or-consigne").textContent = "Listen.";
+  montrer("or-vu-metre", false);
+  await jouerNote(cibleHz, REGLAGES_OREILLE.msReference);
+
+  elt("or-consigne").textContent = "Now sing it, on ah, and hold it.";
+  montrer("or-vu-metre", true);
+
+  let derniere = 0;
+  etat.ecoute = await ecouter((trame) => {
+    if (trame.hz > 0 && trame.confiance >= REGLAGES_OREILLE.confianceMin) {
+      derniere = trame.hz;
+      elt("or-vive").textContent = nommerNote(Math.round(hzVersMidi(trame.hz)), "lettres");
+    }
+  });
+
+  await new Promise((resoudre) => setTimeout(resoudre, REGLAGES_OREILLE.msEcoute));
+  const trames = await etat.ecoute.arreter();
+  const msParTrame = etat.ecoute.msParTrame;
+  etat.ecoute = null;
+
+  const hz = hauteurRetenue(trames, msParTrame);
+  etat.resultats.push(hz === null ? null : noterAppariement(hz, cibleHz));
+  elt("or-vive").textContent = "-";
+}
+
+/**
+ * LE MICROPHONE, DEMANDE UNE SEULE FOIS ET SOUS GARDE.
+ *
+ * POURQUOI CETTE GARDE EXISTE, ET ELLE VIENT D'UN VRAI PLANTAGE. Si l'on
+ * demande le microphone et que l'utilisateur ne repond NI oui NI non, la
+ * promesse de `getUserMedia` ne se resout jamais. Elle ne rejette pas non plus,
+ * donc aucun `catch` ne la rattrape. La page reste alors sur `Now sing it` pour
+ * toujours, en silence, et le visiteur conclut que le test est casse.
+ *
+ * Ca n'arrive pas qu'aux navigateurs pilotes. Un utilisateur qui ecarte la
+ * demande sans cliquer, ou un onglet en arriere-plan quand elle apparait,
+ * tombent au meme endroit. Un refus franc, lui, rejette proprement et se dit
+ * tout seul.
+ */
+async function obtenirMicro() {
+  elt("or-consigne").textContent = "Waiting for microphone permission.";
+  const attente = new Promise((_, rejeter) =>
+    setTimeout(() => rejeter(new Error(
+      "The browser never returned an answer about the microphone. Look for a "
+      + "permission prompt in the address bar, allow it, and start again."
+    )), 20000));
+  await Promise.race([preparer(true), attente]);
+}
+
+async function lancer(base) {
+  etat.base = base;
+  etat.tour = 0;
+  etat.resultats = [];
+  etat.etape = "mesure";
+
+  montrer("or-accueil", false);
+  montrer("or-resultat", false);
+  montrer("or-mesure", true);
+  elt("or-erreur").hidden = true;
+
+  try {
+    await obtenirMicro();
+    for (etat.tour = 0; etat.tour < DEGRES.length; etat.tour++) {
+      await jouerUnTour();
+    }
+  } catch (souci) {
+    montrer("or-mesure", false);
+    montrer("or-accueil", true);
+    const erreur = elt("or-erreur");
+    erreur.textContent = String(souci && souci.message ? souci.message : souci);
+    erreur.hidden = false;
+    etat.etape = "accueil";
+    return;
+  }
+
+  await liberer();
+  afficherBilan();
+}
+
+// ---------------------------------------------------------------------------
+// L'AFFICHAGE DU BILAN
+// ---------------------------------------------------------------------------
+
+function afficherBilan() {
+  const bilan = composerBilan(etat.resultats);
+  etat.bilan = bilan;
+  etat.etape = "resultat";
+
+  montrer("or-mesure", false);
+  montrer("or-resultat", true);
+
+  elt("or-verdict").textContent = TEXTE_VERDICT[bilan.verdict];
+
+  elt("or-chiffre").textContent = bilan.valides
+    ? `${Math.round(bilan.ecartMedian)} cents off, typically`
+    : "";
+
+  const detail = [];
+  if (bilan.valides < bilan.tentatives) {
+    detail.push(`${bilan.tentatives - bilan.valides} of ${bilan.tentatives} attempts had no held note in them and were not scored.`);
+  }
+  if (bilan.replis > 0) {
+    detail.push(`${bilan.replis} of your notes were the right note in a different octave. That is counted as correct, because it is.`);
+  }
+  if (bilan.biaisNet) {
+    detail.push(`You were consistently ${bilan.biais > 0 ? "above" : "below"} every target rather than scattered around them, which is the easier of the two problems to fix.`);
+  }
+  detail.push("A semitone is 100 cents. Trained singers hold a note inside 10.");
+  elt("or-detail").textContent = detail.join(" ");
+
+  const suite = SUITE[bilan.verdict];
+  elt("or-suite-titre").textContent = suite.titre;
+  elt("or-suite-texte").textContent = suite.texte;
+
+  // RIEN veut dire que la mesure a echoue, pas que la personne chante mal.
+  // Lui presenter un prix a ce moment-la serait encaisser sur une panne.
+  const mesureRatee = bilan.verdict === "RIEN";
+  montrerSiPresent("or-offre", !mesureRatee);
+  montrerSiPresent("or-vente", !mesureRatee);
+
+  const hote = elt("or-lignes");
+  hote.textContent = "";
+  etat.resultats.forEach((resultat, i) => {
+    const cible = cibleDuTour(i);
+    const rang = document.createElement("div");
+    rang.className = "or-rang";
+
+    const nom = document.createElement("span");
+    nom.className = "or-nom";
+    nom.textContent = nommerNote(cible, "lettres");
+
+    const valeur = document.createElement("span");
+    valeur.className = "or-valeur";
+    if (resultat === null) {
+      valeur.textContent = "no held note";
+    } else {
+      const ecart = Math.round(resultat.ecartCents);
+      const sens = ecart === 0 ? "exact" : ecart > 0 ? "sharp" : "flat";
+      valeur.textContent = ecart === 0
+        ? "exact"
+        : `${Math.abs(ecart)} cents ${sens}`;
+      if (resultat.octavesDeplacees !== 0) {
+        valeur.textContent += `, ${Math.abs(resultat.octavesDeplacees)} octave ${resultat.octavesDeplacees > 0 ? "down" : "up"}`;
+      }
+    }
+    rang.append(nom, valeur);
+    hote.appendChild(rang);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// LE BRANCHEMENT
+// ---------------------------------------------------------------------------
+
+function brancher() {
+  elt("or-grave").addEventListener("click", () => lancer("grave"));
+  elt("or-aigu").addEventListener("click", () => lancer("aigu"));
+  elt("or-recommencer").addEventListener("click", () => {
+    montrer("or-resultat", false);
+    montrer("or-accueil", true);
+    etat.etape = "accueil";
+  });
+
+  const diag = diagnostic();
+  if (!diag.utilisable) {
+    const erreur = elt("or-erreur");
+    erreur.textContent = diag.raison;
+    erreur.hidden = false;
+    elt("or-grave").disabled = true;
+    elt("or-aigu").disabled = true;
+  }
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", brancher);
+} else {
+  brancher();
+}
+
+})();
+/* OREILLE:FIN */
+</script>
+</body>
+</html>
