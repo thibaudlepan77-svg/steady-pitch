@@ -113,6 +113,7 @@
   .or-verdict{font-size:1.25rem;font-weight:700;margin:.2rem 0 .1rem}
   .or-chiffre{font-family:"IBM Plex Mono",monospace;color:var(--accent);
     font-size:1.05rem;margin:0 0 .6rem}
+  #or-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
 </style>
 </head>
 <body>
@@ -153,6 +154,17 @@
       <p class="detail" id="or-detail"></p>
       <div class="actions">
         <button id="or-recommencer" type="button">Test again</button>
+      </div>
+      <div id="or-suite">
+        <h2 class="suite-titre" id="or-suite-titre"></h2>
+        <p id="or-suite-texte"></p>
+        <p id="or-offre"><a class="lancer" href="./app.html">Open the trainer,
+        level 1 free</a></p>
+        <p class="apres" id="or-vente">Or keep it. The trainer, the range test and this one run
+        with the internet switched off for 9.99 on
+        <a href="https://payhip.com/SteadyPitch">the store</a>. One price, once,
+        nothing to unlock afterwards. Everything on this page stays free to use
+        here, what you pay for is keeping it.</p>
       </div>
     </div>
   </div>
@@ -1894,6 +1906,53 @@ const TEXTE_VERDICT = {
   RIEN: "Not enough held sound to score.",
 };
 
+/**
+ * CE QU'ON PROPOSE APRES LE VERDICT, ET CE N'EST PAS LE MEME TEXTE POUR TOUS.
+ *
+ * Le moment ou quelqu'un vient d'apprendre un chiffre sur sa propre voix est le
+ * seul de la page ou il a une raison de vouloir la suite. Lui servir la meme
+ * phrase de vente qu'il ait ete a huit cents ou a deux cents serait
+ * malhonnete, et se verrait.
+ *
+ * Celui qui est deja juste n'a rien a corriger, on ne lui vend pas une
+ * correction. Celui qui n'a rien produit d'exploitable a un probleme de
+ * materiel ou de consigne, et lui proposer un achat a ce moment-la serait
+ * profiter d'une mesure ratee.
+ */
+const SUITE = {
+  JUSTE: {
+    titre: "You do not need fixing, so here is the honest next thing.",
+    texte: "Matching a note you have just heard is the easy half. Holding it "
+      + "through a phrase, and finding it without a reference first, are the "
+      + "parts that take work. That is what the trainer drills.",
+  },
+  ORDINAIRE: {
+    titre: "This is the range where practice moves the number fastest.",
+    texte: "You are landing near the notes and not on them, which is the most "
+      + "common result and the most responsive to work. What changes it is "
+      + "short sessions with feedback on every attempt rather than long ones.",
+  },
+  APPROXIMATIF: {
+    titre: "You are hearing the notes. The gap is in landing on them.",
+    texte: "That gap closes with immediate feedback, because the correction has "
+      + "to arrive while the note is still sounding. Being told afterwards that "
+      + "you were flat teaches almost nothing.",
+  },
+  LOIN: {
+    titre: "Before concluding anything, rule out the boring explanations.",
+    texte: "A noisy room, a distant microphone, or singing while the reference "
+      + "note is still playing will all produce this. Try once more with "
+      + "headphones. If it holds up, start from single held notes with a "
+      + "reference sounding next to you rather than from songs.",
+  },
+  RIEN: {
+    titre: "Nothing was measured, so there is nothing to conclude.",
+    texte: "The page needs a note held for about a second to score it. Sing an "
+      + "open ah out loud rather than humming, and check that the browser is "
+      + "using the microphone you think it is.",
+  },
+};
+
 function composerBilan(resultats) {
   const valides = resultats.filter((r) => r !== null);
   const ecarts = valides.map((r) => Math.abs(r.ecartCents));
@@ -2040,6 +2099,16 @@ function afficherBilan() {
   }
   detail.push("A semitone is 100 cents. Trained singers hold a note inside 10.");
   elt("or-detail").textContent = detail.join(" ");
+
+  const suite = SUITE[bilan.verdict];
+  elt("or-suite-titre").textContent = suite.titre;
+  elt("or-suite-texte").textContent = suite.texte;
+
+  // RIEN veut dire que la mesure a echoue, pas que la personne chante mal.
+  // Lui presenter un prix a ce moment-la serait encaisser sur une panne.
+  const mesureRatee = bilan.verdict === "RIEN";
+  montrer("or-offre", !mesureRatee);
+  montrer("or-vente", !mesureRatee);
 
   const hote = elt("or-lignes");
   hote.textContent = "";
