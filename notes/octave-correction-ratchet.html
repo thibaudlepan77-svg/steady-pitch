@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>An octave correction that could not tell a glitch from a soprano</title>
+<meta name="description" content="A pitch detector slips octaves, so I folded each frame onto the previous one. One stray frame then folded away two seconds of correct readings. What actually separates a detector glitch from a real octave jump is the return, not the duration.">
+<link rel="canonical" href="https://thibaudlepan77-svg.github.io/steady-pitch/notes/octave-correction-ratchet.html">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Steady Pitch">
+<meta property="og:title" content="An octave correction that could not tell a glitch from a soprano">
+<meta property="og:description" content="One stray frame became an anchor, and 58 correct readings were folded onto it one by one. The fix was not a tighter threshold.">
+<meta property="og:url" content="https://thibaudlepan77-svg.github.io/steady-pitch/notes/octave-correction-ratchet.html">
+<meta property="og:image" content="https://thibaudlepan77-svg.github.io/steady-pitch/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://thibaudlepan77-svg.github.io/steady-pitch/og.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%238a3324%27%2F%3E%3Cpath%20d%3D%27M6%2021a10%2010%200%200%201%2020%200%27%20fill%3D%27none%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3Cpath%20d%3D%27M16%2021V9%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--fond:#fbfaf7;--encre:#1b1a17;--doux:#5d5a52;--trait:#ddd8cc;--accent:#8a3324;--carte:#fff;--surlign:#f3efe4}
+  @media (prefers-color-scheme:dark){
+    :root{--fond:#14150f;--encre:#eceadf;--doux:#a09c8f;--trait:#33342b;--accent:#e0876f;--carte:#1c1d16;--surlign:#23241b}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--fond);color:var(--encre)}
+  body{font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.6}
+  main{max-width:40rem;margin:0 auto;padding:2.4rem 1.4rem 5rem}
+  .fil{font-family:"IBM Plex Mono",monospace;font-size:.76rem;margin:0 0 1.6rem}
+  .fil a{color:var(--doux)}
+  h1{font-size:1.85rem;line-height:1.2;margin:0 0 .6rem;font-weight:700}
+  .chapeau{font-size:1.05rem;color:var(--doux);margin:0 0 2rem}
+  h2{font-size:1.05rem;margin:2.4rem 0 .5rem;font-weight:700;border-left:3px solid var(--accent);padding-left:.55rem}
+  p{margin:.8rem 0}
+  pre{font-family:"IBM Plex Mono",monospace;font-size:.79rem;background:var(--surlign);
+    border-radius:.35rem;padding:.9rem 1rem;overflow-x:auto;line-height:1.5}
+  code{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:var(--surlign);
+    padding:.08em .3em;border-radius:.2rem}
+  pre code{background:none;padding:0}
+  .encart{border:1px solid var(--trait);background:var(--carte);border-radius:.4rem;
+    padding:1.1rem 1.2rem;margin:2rem 0}
+  .encart a{color:var(--accent)}
+  footer{margin-top:3rem;padding-top:.9rem;border-top:1px solid var(--trait);
+    font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--doux)}
+  footer a{color:var(--doux)}
+</style>
+</head>
+<body>
+<main>
+
+  <p class="fil"><a href="../">Steady Pitch</a> / notes</p>
+
+  <h1>An octave correction that could not tell a glitch from a soprano</h1>
+  <p class="chapeau">Forty five unit tests green, then the first run in a real
+  browser read a held A4 as an A2. The correction was not too weak. It was the
+  wrong shape.</p>
+
+  <h2>What the code had to do</h2>
+  <p>I was building a vocal range test. You slide down to your lowest note, then
+  up to your highest, and it names both ends. The hard part is not the pitch
+  detection, it is deciding which of the several hundred readings in a sweep
+  deserve to be called your lowest note.</p>
+
+  <p>Pitch detectors slip octaves. A sung low note often carries more energy in
+  its second harmonic than in its fundamental, so a detector can lock onto the
+  wrong lobe and report a note exactly twice the frequency, or half it. If you
+  take the raw minimum of a downward sweep you will almost always be reporting
+  one of those slips rather than a note the person sang. So the reading has to
+  be corrected before anything is concluded from it.</p>
+
+  <h2>The correction I wrote, which looks obviously right</h2>
+  <p>Voices are continuous. Between two frames forty milliseconds apart, a
+  singer cannot jump a fifth. So any gap larger than that is suspicious, and a
+  gap of very nearly 1200 cents is the classic detector slip. Fold it back and
+  carry on.</p>
+
+<pre>for each frame {
+    gap = cents(frame, previous)
+    if (|gap| &gt; 700) {
+        if (|gap - 1200| &lt;= 60) frame = frame / 2
+        if (|gap + 1200| &lt;= 60) frame = frame * 2
+    }
+    previous = frame
+}</pre>
+
+  <p>Forty five checks over synthetic sweeps, all green. A single stray frame in
+  the middle of a held note did not move the answer. A run of six frames an
+  octave low, surrounded by the correct note, was folded back and the answer
+  held. A breath in the middle did not break anything.</p>
+
+  <h2>What the browser did on the first run</h2>
+  <p>I drove the real page with a synthetic tone at 440 Hz, held for a little
+  over two seconds, and asked for the highest note. It answered A2. Two octaves
+  down, from a signal that never left 440 Hz.</p>
+
+  <p>The diagnostic line on the page said <code>58 octave slips corrected</code>,
+  which is what gave it away. Fifty eight corrections on a signal that needed
+  none.</p>
+
+  <p>Here is the sequence. When the test source changed, one leftover frame from
+  the previous tone arrived first, at 110 Hz. That frame became <code>previous</code>.
+  The next frame, a perfectly good 440 Hz, sat 2400 cents above it, so it was
+  folded down to 110. And then the line that ruins everything.</p>
+
+<pre>previous = frame</pre>
+
+  <p>The anchor was now the folded value. Every subsequent frame was measured
+  against a number the correction had itself invented, found to be two octaves
+  high, and folded. Fifty eight times. It was not a correction, it was a
+  ratchet, and once engaged nothing in the loop could disengage it.</p>
+
+  <h2>Why this was not a test artifact</h2>
+  <p>The stray frame came from my bench, so the first honest question is whether
+  this could happen to a real person. It can, and worse.</p>
+
+  <p>A singer reaching for the top of her range flips into head voice. That is a
+  real jump of an octave, sung on purpose, and it is precisely the note the test
+  exists to measure. My correction would have folded her entire upper register
+  down, silently, and told her that her range stopped where her chest voice
+  stopped. Nobody would have reported that as a bug. They would have concluded
+  the tool does not work and closed the tab.</p>
+
+  <h2>The thing that actually separates the two</h2>
+  <p>I spent a while looking for a better threshold before noticing that no
+  threshold can work. The detector slip and the sung octave are identical in
+  size, they are identical in direction, and duration does not separate them
+  either, since a slip can last half a second and a deliberate jump can be
+  short.</p>
+
+  <p>What separates them is what happens afterwards.</p>
+
+  <p>When the detector slips, the reading comes back to where it was. The bad
+  stretch is bracketed by the correct value on both sides. When the voice jumps,
+  it stays. Nothing comes back.</p>
+
+  <p>That rule cannot be applied one frame at a time, because at the moment of
+  the jump the evidence has not arrived yet. It needs to look ahead, which is
+  fine here, because the analysis runs over a whole sweep rather than as a
+  stream.</p>
+
+  <h2>The rewrite</h2>
+  <p>Two passes. The first cuts the sweep into plateaus, groups of neighbouring
+  frames holding roughly the same pitch, breaking on silence and on jumps. The
+  second walks the plateaus and folds one only when the plateau after it returns
+  to the pitch of the plateau before it.</p>
+
+  <p>A plateau that follows silence is never folded at all. A breath is exactly
+  what lets a singer change register on purpose, so an octave across a breath is
+  taken at face value.</p>
+
+  <p>Three cases now sit next to each other in the test file, and they are the
+  point of the whole exercise.</p>
+
+<pre>one stray frame, then A4 held 58 frames    answer A4, nothing folded
+E4 held, then E5 held, both 20 frames      answer E5, nothing folded
+E4, then E5, then E4 again                 answer E4, 20 frames folded</pre>
+
+  <p>The second and third have the same jump, the same size, the same direction.
+  Only the third has a return, and only the third is treated as a fault.</p>
+
+  <h2>What I took away</h2>
+  <p>A correction that takes its reference from its own last output is a
+  ratchet. It has no way of discovering that its reference was wrong, because
+  every new value confirms it. Tightening the threshold does not help. The fix
+  is to give the correction a reference that does not depend on what it just
+  corrected.</p>
+
+  <p>And the tests. Forty five checks did not find this, and they were not bad
+  tests, they were tests of the failures I had thought of. The browser found it
+  on the first run because it produced an input I would never have written down,
+  a leftover frame at a source change. One run of the real thing was worth more
+  than ten more synthetic cases.</p>
+
+  <div class="encart">
+    <p>The range test this came out of runs in a browser tab, with nothing to
+    install and nothing uploaded. It is at
+    <a href="../vocal-range-test.html">vocal-range-test</a>, and the detector
+    behind it is measured in cents against known tones in
+    <a href="./pitch-detector-reads-sharp.html">my pitch detector read every
+    note sharp</a>.</p>
+  </div>
+
+  <footer>
+    Steady Pitch, by Thibaud Lepan.
+    Questions and corrections, thibaudlepanpro@gmail.com.
+    <a href="../">Home</a>.
+  </footer>
+
+</main>
+</body>
+</html>
