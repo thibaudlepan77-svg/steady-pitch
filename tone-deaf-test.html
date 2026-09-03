@@ -1763,6 +1763,33 @@ const etat = {
 window.__oreille = etat;
 window.__oreilleNotation = { noterAppariement, composerBilan, hauteurRetenue, verdictDe };
 
+/**
+ * LE BANC EN NAVIGATEUR. Il remplace le microphone par un son de frequence
+ * CONNUE et fait tourner tout le reste pour de vrai, worklet compris, a la
+ * vraie frequence d'echantillonnage du materiel.
+ *
+ * Sans lui, la seule facon d'eprouver la chaine de mesure serait de chanter
+ * dans un navigateur pilote, qui n'a pas de microphone. Le banc hors
+ * navigateur, lui, ne juge que la notation, en lui donnant des trames que
+ * j'ai ecrites moi-meme. Entre les deux il reste le detecteur et le transport
+ * audio, et c'est precisement la que le cycle 16 avait cache sa faute.
+ *
+ * CE QU'IL NE PROUVE PAS, et je prefere l'ecrire, la capture elle-meme, le
+ * gain d'entree et la latence du bus audio.
+ */
+window.__oreilleBanc = async function (hzSource, cibleMidi) {
+  const ecoute = await ecouter(null, hzSource);
+  await new Promise((resoudre) => setTimeout(resoudre, REGLAGES_OREILLE.msEcoute));
+  const trames = await ecoute.arreter();
+  const hz = hauteurRetenue(trames, ecoute.msParTrame);
+  await liberer();
+  return {
+    trames: trames.length,
+    hzRetenu: hz,
+    note: hz === null ? null : noterAppariement(hz, midiVersHz(cibleMidi)),
+  };
+};
+
 function elt(id) {
   const noeud = document.getElementById(id);
   if (!noeud) throw new Error(`element absent, ${id}`);
@@ -1904,6 +1931,30 @@ async function jouerUnTour() {
   elt("or-vive").textContent = "-";
 }
 
+/**
+ * LE MICROPHONE, DEMANDE UNE SEULE FOIS ET SOUS GARDE.
+ *
+ * POURQUOI CETTE GARDE EXISTE, ET ELLE VIENT D'UN VRAI PLANTAGE. Si l'on
+ * demande le microphone et que l'utilisateur ne repond NI oui NI non, la
+ * promesse de `getUserMedia` ne se resout jamais. Elle ne rejette pas non plus,
+ * donc aucun `catch` ne la rattrape. La page reste alors sur `Now sing it` pour
+ * toujours, en silence, et le visiteur conclut que le test est casse.
+ *
+ * Ca n'arrive pas qu'aux navigateurs pilotes. Un utilisateur qui ecarte la
+ * demande sans cliquer, ou un onglet en arriere-plan quand elle apparait,
+ * tombent au meme endroit. Un refus franc, lui, rejette proprement et se dit
+ * tout seul.
+ */
+async function obtenirMicro() {
+  elt("or-consigne").textContent = "Waiting for microphone permission.";
+  const attente = new Promise((_, rejeter) =>
+    setTimeout(() => rejeter(new Error(
+      "The browser never returned an answer about the microphone. Look for a "
+      + "permission prompt in the address bar, allow it, and start again."
+    )), 20000));
+  await Promise.race([preparer(true), attente]);
+}
+
 async function lancer(base) {
   etat.base = base;
   etat.tour = 0;
@@ -1913,8 +1964,10 @@ async function lancer(base) {
   montrer("or-accueil", false);
   montrer("or-resultat", false);
   montrer("or-mesure", true);
+  elt("or-erreur").hidden = true;
 
   try {
+    await obtenirMicro();
     for (etat.tour = 0; etat.tour < DEGRES.length; etat.tour++) {
       await jouerUnTour();
     }
