@@ -1783,9 +1783,15 @@ window.__oreilleBanc = async function (hzSource, cibleMidi) {
   const trames = await ecoute.arreter();
   const hz = hauteurRetenue(trames, ecoute.msParTrame);
   await liberer();
+  const confiances = trames.map((t) => t.confiance).sort((a, b) => a - b);
   return {
     trames: trames.length,
     hzRetenu: hz,
+    // La confiance sert a comprendre un `null`. Sans elle, une tentative non
+    // notee ne dit pas si l'utilisateur s'est tu ou si le detecteur a doute.
+    confianceMediane: confiances.length ? confiances[Math.floor(confiances.length / 2)] : null,
+    confianceHaute: confiances.length ? confiances[confiances.length - 1] : null,
+    surLeSeuil: trames.filter((t) => t.hz > 0 && t.confiance >= REGLAGES_OREILLE.confianceMin).length,
     note: hz === null ? null : noterAppariement(hz, midiVersHz(cibleMidi)),
   };
 };
