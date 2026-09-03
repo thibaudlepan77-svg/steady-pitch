@@ -1724,8 +1724,27 @@ async function jouerNote(hz, ms = 1600) {
  */
 
 const REGLAGES_OREILLE = {
-  /** En deca, la trame est du souffle ou du bruit, pas une note tenue. */
-  confianceMin: 0.82,
+  /**
+   * En deca, la trame est du souffle ou du bruit, pas une note tenue.
+   *
+   * CE CHIFFRE EST CELUI DU TEST D'ETENDUE, ET J'AI PAYE POUR L'APPRENDRE.
+   * J'avais d'abord ecrit 0,82, choisi au jugé parce que ca sonnait exigeant.
+   * La confiance rendue par YIN BAISSE QUAND LA NOTE DESCEND, mecaniquement,
+   * parce qu'une fenetre de 2048 echantillons contient de moins en moins de
+   * periodes. Mesure au banc en navigateur, sur un son parfait.
+   *
+   *     220 Hz   confiance 0,894     75 trames sur 75 retenues
+   *     165 Hz   confiance 0,858     74 sur 75
+   *     131 Hz   confiance 0,820     36 sur 75
+   *     110 Hz   confiance 0,789     ZERO sur 75
+   *
+   * A 0,82 le test rendait donc `no held note` a tout homme chantant sous un
+   * do 3, c'est-a-dire a la moitie grave de son public, ET precisement dans le
+   * cas dont la page fait son argument, chanter la bonne note une octave plus
+   * bas. Un seuil invente vaut moins qu'un seuil deja eprouve contre de vraies
+   * voix, et celui-la l'est.
+   */
+  confianceMin: 0.55,
   /** Duree d'ecoute par note, en millisecondes. */
   msEcoute: 3200,
   /** Duree de la note de reference. */
