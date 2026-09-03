@@ -327,3 +327,51 @@ export function diagnostic() {
         : "",
   };
 }
+
+/**
+ * Joue une note de reference dans les enceintes, et rend la main quand elle
+ * s'est TUE. Ajoute le 2026-09-04 (cycle 19) pour le test d'appariement, qui
+ * doit faire entendre une cible avant de demander a l'utilisateur de la
+ * chanter.
+ *
+ * POURQUOI ELLE ATTEND LA FIN, ET C'EST TOUT L'INTERET. Si l'ecoute demarrait
+ * pendant que la note sonne, le microphone entendrait MA note et le detecteur
+ * annoncerait un appariement parfait pour tout le monde, y compris pour
+ * quelqu'un qui n'a pas ouvert la bouche. Un test qui felicite le silence ne
+ * mesure rien. L'appelant enchaine donc sur l'ecoute APRES cette promesse.
+ *
+ * La rampe finale n'est pas une coquetterie. Un oscillateur coupe net produit
+ * un clic large bande, et ce clic tombe pile au moment ou l'ecoute commence.
+ */
+export async function jouerNote(hz, ms = 1600) {
+  await preparer(false);
+
+  const sortie = contexte.createGain();
+  const maintenant = contexte.currentTime;
+  const fin = maintenant + ms / 1000;
+
+  // Un timbre un peu riche s'entend mieux qu'une sinusoide sur un haut-parleur
+  // d'ordinateur portable, ou le grave passe mal.
+  const oscillateurs = [];
+  for (const [rang, poids] of [[1, 1], [2, 0.32], [3, 0.12]]) {
+    const osc = contexte.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = hz * rang;
+    const gain = contexte.createGain();
+    gain.gain.value = poids;
+    osc.connect(gain);
+    gain.connect(sortie);
+    oscillateurs.push(osc);
+  }
+
+  sortie.gain.setValueAtTime(0.0001, maintenant);
+  sortie.gain.exponentialRampToValueAtTime(0.22, maintenant + 0.03);
+  sortie.gain.setValueAtTime(0.22, fin - 0.08);
+  sortie.gain.exponentialRampToValueAtTime(0.0001, fin);
+  sortie.connect(contexte.destination);
+
+  for (const osc of oscillateurs) { osc.start(maintenant); osc.stop(fin + 0.02); }
+
+  await new Promise((resoudre) => setTimeout(resoudre, ms + 60));
+  try { sortie.disconnect(); } catch { /* deja detache */ }
+}

@@ -29,6 +29,7 @@ function priorite(chemin) {
   if (chemin === "") return "1.0";
   if (chemin === "vocal-range-test.html") return "0.9";
   if (chemin === "vocal-range-chart.html") return "0.9";
+  if (chemin === "tone-deaf-test.html") return "0.9";
   if (chemin.endsWith("-vocal-range-test.html")) return "0.8";
   if (chemin === "app.html") return "0.8";
   if (chemin.startsWith("notes/")) return "0.6";
