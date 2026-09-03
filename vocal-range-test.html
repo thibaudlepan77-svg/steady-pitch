@@ -116,7 +116,7 @@
     <div id="tess-mesure" hidden>
       <p class="etape" id="tess-titre-etape">Step 1 of 2, your lowest note</p>
       <p class="consigne" id="tess-consigne"></p>
-      <div class="vive" id="tess-note-vive">—</div>
+      <div class="vive" id="tess-note-vive">-</div>
       <p class="extreme" id="tess-extreme" data-trouve="non"></p>
       <button class="lancer" id="tess-suivant" type="button">Next</button>
     </div>
@@ -2079,7 +2079,7 @@ function rafraichirDirect() {
   if (derniere && derniere.hz > 0 && derniere.confiance >= REGLAGES_TESSITURE.confianceMin) {
     noteVive.textContent = nommer(hzVersMidi(derniere.hz));
   } else {
-    noteVive.textContent = "—";
+    noteVive.textContent = "-";
   }
 
   const partiel = analyserBalayage(etat.trames, etat.sens);
@@ -2291,7 +2291,7 @@ function dessinerCarte() {
   c.fillText("My vocal range", CARTE_LARGEUR / 2, 120);
 
   c.font = "700 132px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-  c.fillText(`${nommer(e.basMidi)} – ${nommer(e.hautMidi)}`, CARTE_LARGEUR / 2, 258);
+  c.fillText(`${nommer(e.basMidi)} to ${nommer(e.hautMidi)}`, CARTE_LARGEUR / 2, 258);
 
   c.font = "500 40px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
   c.fillStyle = "#E7A33E";
