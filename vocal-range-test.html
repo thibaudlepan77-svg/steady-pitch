@@ -2455,39 +2455,75 @@ function dessinerCarte() {
   c.fillStyle = "#FBF7F0";
   c.textAlign = "center";
   c.font = "600 34px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-  c.fillText("My vocal range", CARTE_LARGEUR / 2, 120);
+  c.fillText("My vocal range", CARTE_LARGEUR / 2, 96);
 
   c.font = "700 132px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-  c.fillText(`${nommer(e.basMidi)} to ${nommer(e.hautMidi)}`, CARTE_LARGEUR / 2, 258);
+  c.fillText(`${nommer(e.basMidi)} to ${nommer(e.hautMidi)}`, CARTE_LARGEUR / 2, 228);
 
   c.font = "500 40px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
   c.fillStyle = "#E7A33E";
-  c.fillText(etendueLisible(e), CARTE_LARGEUR / 2, 318);
+  c.fillText(etendueLisible(e), CARTE_LARGEUR / 2, 288);
 
   const type = e.classement.ambigu
     ? `${e.classement.meilleur.reference.etiquette} or ${e.classement.second.reference.etiquette}`
     : e.classement.meilleur.reference.etiquette;
   c.fillStyle = "#C9C0B2";
   c.font = "400 34px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
-  c.fillText(`Closest voice type, ${type}`, CARTE_LARGEUR / 2, 372);
+  c.fillText(`Closest voice type, ${type}`, CARTE_LARGEUR / 2, 342);
 
-  // La reglette. Elle porte les noms d'octave, sinon la barre ne veut rien
-  // dire pour quelqu'un qui ne lit pas les notes.
+  // LE SILLAGE, LES DEUX BALAYAGES BOUT A BOUT SUR LA CARTE.
+  // La premiere version posait une simple reglette. Elle disait la meme chose
+  // que le texte au-dessus, en moins lisible. Ce que personne d'autre ne peut
+  // montrer, c'est la forme de VOTRE voix, et c'est la seule raison qu'on ait
+  // de partager une image plutot que de recopier deux noms de notes.
   const marge = 110;
   const largeur = CARTE_LARGEUR - marge * 2;
-  const y = 452;
-  c.fillStyle = "#2E2A24";
-  c.fillRect(marge, y, largeur, 26);
-  c.fillStyle = "#E7A33E";
-  const debut = positionSurAxe(e.basMidi);
-  c.fillRect(marge + debut * largeur, y,
-    Math.max(4, (positionSurAxe(e.hautMidi) - debut) * largeur), 26);
+  const hautPanneau = 396;
+  const basPanneau = 528;
+  const hauteurPanneau = basPanneau - hautPanneau;
+  const yDe = (midi) => basPanneau - positionSurAxe(midi) * hauteurPanneau;
 
+  // La bande de l'etendue, derriere, pour que la courbe se lise contre elle.
+  c.fillStyle = "#221F19";
+  c.fillRect(marge, yDe(e.hautMidi), largeur, yDe(e.basMidi) - yDe(e.hautMidi));
+
+  c.strokeStyle = "#3A362E";
+  c.lineWidth = 1;
   c.fillStyle = "#8B8377";
-  c.font = "400 24px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+  c.textAlign = "right";
+  c.font = "400 20px ui-monospace, monospace";
   for (let midi = MIDI_AXE_BAS; midi <= MIDI_AXE_HAUT; midi += 12) {
-    c.fillText(nommer(midi), marge + positionSurAxe(midi) * largeur, y + 58);
+    const ligne = Math.round(yDe(midi)) + 0.5;
+    c.beginPath();
+    c.moveTo(marge, ligne);
+    c.lineTo(marge + largeur, ligne);
+    c.stroke();
+    c.fillText(nommer(midi), marge - 10, ligne + 7);
   }
+
+  const sillage = [...(etat.tramesDe.grave || []), ...(etat.tramesDe.aigu || [])];
+  if (sillage.length > 1) {
+    c.strokeStyle = "#E7A33E";
+    c.lineWidth = 3;
+    c.lineJoin = "round";
+    c.beginPath();
+    let leve = true;
+    sillage.forEach((trame, i) => {
+      const x = marge + (i / (sillage.length - 1)) * largeur;
+      if (!(trame.hz > 0) || trame.confiance < REGLAGES_TESSITURE.confianceMin) {
+        leve = true;
+        return;
+      }
+      const ligne = yDe(hzVersMidi(trame.hz));
+      if (leve) { c.moveTo(x, ligne); leve = false; } else { c.lineTo(x, ligne); }
+    });
+    c.stroke();
+  }
+
+  c.textAlign = "center";
+  c.fillStyle = "#8B8377";
+  c.font = "400 22px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+  c.fillText("my two sweeps, low then high", CARTE_LARGEUR / 2, basPanneau + 34);
 
   c.fillStyle = "#FBF7F0";
   c.font = "500 30px system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
