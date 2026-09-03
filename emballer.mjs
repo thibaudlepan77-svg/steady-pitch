@@ -227,6 +227,10 @@ function pourOffre(js, cle) {
     "const CURRICULUM = " + JSON.stringify(garde, null, 1) + ";");
 }
 
+// Copier les fichiers statiques (notes, images, etc.)
+import { cpSync } from "node:fs";
+cpSync(join(PUBLIC, "notes"), join(SORTIE, "notes"), { recursive: true });
+
 const rendus = [];
 for (const offre of OFFRES) {
   const tete = `<script>globalThis.__OFFRE = ${JSON.stringify(offre.cle)};</script>\n`;
