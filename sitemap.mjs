@@ -31,6 +31,7 @@ function priorite(chemin) {
   if (chemin === "vocal-range-chart.html") return "0.9";
   if (chemin === "tone-deaf-test.html") return "0.9";
   if (chemin === "vocal-range-check-choir.html") return "0.7";
+  if (chemin === "tuner-says-wrong-octave.html") return "0.7";
   if (chemin.endsWith("-vocal-range-test.html")) return "0.8";
   if (chemin === "app.html") return "0.8";
   if (chemin.startsWith("notes/")) return "0.6";
