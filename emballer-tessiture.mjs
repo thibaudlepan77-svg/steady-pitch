@@ -56,9 +56,25 @@ couper(/\s*<p class="apres" id="tess-vente">[\s\S]*?<\/p>/, "le paragraphe de ve
 
 // Les liens internes. `./app.html` devient le fichier voisin, les autres
 // partent vers le site, ou ils existent pour de bon.
+// Les fichiers VOISINS, ceux que l'acheteur a recus dans le meme lot. Ils
+// doivent rester relatifs, sinon un fichier hors ligne renverrait au site pour
+// ouvrir un fichier pose a cote de lui.
 html = html.replaceAll('href="./app.html"', 'href="steady-pitch.html"');
+html = html.replaceAll('href="./tone-deaf-test.html"', 'href="tone-deaf-test.html"');
 html = html.replaceAll('href="./notes/', `href="${RACINE}notes/`);
 html = html.replaceAll('href="./"', `href="${RACINE}"`);
+
+/**
+ * LE RESTE PART VERS LE SITE, ET CETTE REGLE EST GENERALE A DESSEIN.
+ *
+ * Les trois lignes ci-dessus nommaient chaque lien un par un. Le jour ou j'ai
+ * ajoute six pages de type de voix et un tableau a la page publique, ce fichier
+ * a refuse d'ecrire, parce que sept liens relatifs ne correspondaient a aucune
+ * regle. Il a eu raison de refuser, mais une liste a tenir a jour est une liste
+ * qu'on oublie. Tout ce qui reste en `./quelque-chose` est une page du site, et
+ * s'y en va.
+ */
+html = html.replace(/href="\.\/([\w-]+\.html)"/g, `href="${RACINE}$1"`);
 
 const restes = [
   ...html.matchAll(/<link[^>]+href="(https?:[^"]+)"/g),

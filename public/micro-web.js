@@ -186,16 +186,54 @@ async function degourdir() {
   msDeChauffe = Math.round(performance.now() - depart);
 }
 
+/**
+ * LE DELAI DE GARDE SUR LA DEMANDE DE MICROPHONE, ET IL VIENT D'UN RAPPORT
+ * D'UTILISATEUR, pas d'une inquietude de bureau. `getUserMedia` ne se resout
+ * jamais ET ne rejette jamais quand personne ne repond ni oui ni non a la
+ * demande de permission. Aucun `catch` ne part, l'ecran de mesure reste
+ * affiche pour toujours, et le visiteur conclut que la page est cassee. Un
+ * refus franc, lui, rejette proprement et se raconte tout seul.
+ *
+ * Ca n'arrive pas qu'au navigateur pilote. Un onglet bascule en arriere-plan
+ * pendant que la demande s'affiche, une demande ecartee sans clic, un materiel
+ * qui met une eternite a s'ouvrir, tombent tous au meme endroit.
+ *
+ * La garde est ici et non dans chaque ecran, parce que le piege est dans
+ * l'appel et pas dans l'interface. Le test d'appariement portait deja la
+ * sienne, le test d'etendue n'en avait aucune, et c'est celui-la qu'un
+ * inconnu a essaye.
+ */
+const MS_ATTENTE_PERMISSION = 20000;
+
 async function brancherMicro() {
-  fluxMicro = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-      channelCount: 1,
-    },
+  let garde;
+  const abandon = new Promise((_, rejeter) => {
+    garde = setTimeout(() => rejeter(new Error(
+      "The browser never answered about the microphone. Look for a permission "
+      + "request near the address bar, allow it, then start again."
+    )), MS_ATTENTE_PERMISSION);
   });
+
+  try {
+    fluxMicro = await Promise.race([
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 1,
+        },
+      }),
+      abandon,
+    ]);
+  } finally {
+    // Sans ca, la promesse perdante rejette dans le vide vingt secondes plus
+    // tard et le navigateur signale un rejet non rattrape sur une seance qui
+    // s'est parfaitement bien passee.
+    clearTimeout(garde);
+  }
+
   contexte.createMediaStreamSource(fluxMicro).connect(noeud);
 }
 

@@ -101,22 +101,36 @@ async function demarrerBalayage(sens) {
   montrer("tess-mesure", true);
   montrer("tess-resultat", false);
 
+  // La consigne dit d'abord ce que la page attend. Une demande de permission
+  // peut mettre plusieurs secondes a apparaitre, et pendant ce temps un ecran
+  // qui dit deja de chanter demande quelque chose que rien n'ecoute encore.
+  const consigne = elt("tess-consigne").textContent;
+  elt("tess-consigne").textContent = "Waiting for the microphone.";
+
   try {
     etat.ecoute = await ecouter((trame) => {
       etat.trames.push(trame);
       rafraichirDirect();
     }, etat.sourceDeTest ?? null);
+    elt("tess-consigne").textContent = consigne;
     elt("tess-erreur").hidden = true;
   } catch (erreur) {
-    // Le refus du microphone est le cas le plus frequent, et une page qui ne
-    // dit rien laisse le visiteur devant un ecran mort.
+    // Trois causes derriere le meme ecran mort, et elles n'appellent pas la
+    // meme manoeuvre. Un refus se leve dans les reglages du navigateur, une
+    // demande sans reponse se rattrape dans la barre d'adresse, et le reste
+    // se raconte avec ses propres mots plutot qu'avec les miens.
     montrer("tess-mesure", false);
     montrer("tess-accueil", true);
+    elt("tess-consigne").textContent = consigne;
     const boite = elt("tess-erreur");
     boite.hidden = false;
-    boite.textContent = "The microphone is not available. Check that your browser "
-      + "is allowed to use it, then try again. Nothing is recorded or uploaded, "
-      + "the whole test runs on your machine.";
+    boite.textContent = erreur && erreur.name === "NotAllowedError"
+      ? "The microphone is blocked for this page. Allow it in your browser "
+        + "settings, then start again. Nothing is recorded and nothing is "
+        + "uploaded, the whole test runs on your machine."
+      : (erreur && erreur.message)
+        || "The microphone is not available. Check that your browser is "
+          + "allowed to use it, then try again.";
     etat.etape = "accueil";
   }
 }

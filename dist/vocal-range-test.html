@@ -162,6 +162,10 @@
   <p class="apres">The monitor is the same detector, running continuously, with
   the cents readout and a ten second trace.</p>
 
+  <p><a href="https://thibaudlepan77-svg.github.io/steady-pitch/vocal-range-check-choir.html">Running range checks on a whole
+  choir</a>, if you are measuring a room rather than yourself. Twenty singers in
+  one rehearsal, and what to do with the twenty pairs of numbers.</p>
+
   <h2>How to get a result you can trust</h2>
   <p>The test listens for a note you <em>hold</em>. A note that flashes past on
   the way down is not counted, because a single frame at the bottom of a sweep
@@ -177,6 +181,19 @@
     <li>Quiet room, microphone not too close. A phone held at arm's length works
     fine.</li>
   </ul>
+
+  <h2>One page per voice type</h2>
+  <p>If you are testing against a type you already suspect, each of the six has
+  its own page. Same test, same detector, and the reference range for that type
+  written out with what it does and does not settle.
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/bass-vocal-range-test.html">Bass</a>,
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/baritone-vocal-range-test.html">baritone</a>,
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/tenor-vocal-range-test.html">tenor</a>,
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/alto-vocal-range-test.html">alto</a>,
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/mezzo-soprano-vocal-range-test.html">mezzo-soprano</a>,
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/soprano-vocal-range-test.html">soprano</a>. The
+  <a href="https://thibaudlepan77-svg.github.io/steady-pitch/vocal-range-chart.html">vocal range chart</a> puts all six on one
+  axis if you want to see how far they overlap before choosing.</p>
 
   <h2>What the voice type actually means</h2>
   <p>The six types on the chart are conventions of repertoire, not measurements
@@ -789,6 +806,8 @@ const TEXTES                        = {
     ecart_moyen: "Average error",
     choisir_entree: "How do you want to work on your pitch",
     tessiture: "Your range",
+    tess_basse: "Bass", tess_baryton: "Baritone", tess_tenor: "Tenor", tess_alto: "Alto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Child", tess_large: "Not sure",
     recommencer: "Start again",
     ecoute_en_cours: "Listening",
     details_techniques: "Technical details",
@@ -811,6 +830,8 @@ const TEXTES                        = {
     ecart_moyen: "Ecart moyen",
     choisir_entree: "Choisissez comment travailler votre justesse",
     tessiture: "Votre tessiture",
+    tess_basse: "Basse", tess_baryton: "Baryton", tess_tenor: "Tenor", tess_alto: "Alto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Enfant", tess_large: "Je ne sais pas",
     recommencer: "Recommencer",
     ecoute_en_cours: "A l'ecoute",
     details_techniques: "Details techniques",
@@ -833,6 +854,8 @@ const TEXTES                        = {
     ecart_moyen: "Error medio",
     choisir_entree: "Como quieres trabajar tu afinacion",
     tessiture: "Tu tesitura",
+    tess_basse: "Bajo", tess_baryton: "Baritono", tess_tenor: "Tenor", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Nino", tess_large: "No lo se",
     recommencer: "Empezar de nuevo",
     ecoute_en_cours: "Escuchando",
     details_techniques: "Detalles tecnicos",
@@ -855,6 +878,8 @@ const TEXTES                        = {
     ecart_moyen: "Mittlere Abweichung",
     choisir_entree: "Wie willst du an deiner Intonation arbeiten",
     tessiture: "Dein Stimmumfang",
+    tess_basse: "Bass", tess_baryton: "Bariton", tess_tenor: "Tenor", tess_alto: "Alt",
+    tess_mezzo: "Mezzo", tess_soprano: "Sopran", tess_enfant: "Kind", tess_large: "Weiss ich nicht",
     recommencer: "Neu beginnen",
     ecoute_en_cours: "Hoert zu",
     details_techniques: "Technische Details",
@@ -877,6 +902,8 @@ const TEXTES                        = {
     ecart_moyen: "Errore medio",
     choisir_entree: "Come vuoi lavorare sulla tua intonazione",
     tessiture: "La tua estensione",
+    tess_basse: "Basso", tess_baryton: "Baritono", tess_tenor: "Tenore", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Bambino", tess_large: "Non lo so",
     recommencer: "Ricomincia",
     ecoute_en_cours: "In ascolto",
     details_techniques: "Dettagli tecnici",
@@ -899,6 +926,8 @@ const TEXTES                        = {
     ecart_moyen: "Erro medio",
     choisir_entree: "Como quer trabalhar a sua afinacao",
     tessiture: "A sua tessitura",
+    tess_basse: "Baixo", tess_baryton: "Baritono", tess_tenor: "Tenor", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Crianca", tess_large: "Nao sei",
     recommencer: "Recomecar",
     ecoute_en_cours: "A escutar",
     details_techniques: "Detalhes tecnicos",
@@ -1908,16 +1937,54 @@ async function degourdir() {
   msDeChauffe = Math.round(performance.now() - depart);
 }
 
+/**
+ * LE DELAI DE GARDE SUR LA DEMANDE DE MICROPHONE, ET IL VIENT D'UN RAPPORT
+ * D'UTILISATEUR, pas d'une inquietude de bureau. `getUserMedia` ne se resout
+ * jamais ET ne rejette jamais quand personne ne repond ni oui ni non a la
+ * demande de permission. Aucun `catch` ne part, l'ecran de mesure reste
+ * affiche pour toujours, et le visiteur conclut que la page est cassee. Un
+ * refus franc, lui, rejette proprement et se raconte tout seul.
+ *
+ * Ca n'arrive pas qu'au navigateur pilote. Un onglet bascule en arriere-plan
+ * pendant que la demande s'affiche, une demande ecartee sans clic, un materiel
+ * qui met une eternite a s'ouvrir, tombent tous au meme endroit.
+ *
+ * La garde est ici et non dans chaque ecran, parce que le piege est dans
+ * l'appel et pas dans l'interface. Le test d'appariement portait deja la
+ * sienne, le test d'etendue n'en avait aucune, et c'est celui-la qu'un
+ * inconnu a essaye.
+ */
+const MS_ATTENTE_PERMISSION = 20000;
+
 async function brancherMicro() {
-  fluxMicro = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-      channelCount: 1,
-    },
+  let garde;
+  const abandon = new Promise((_, rejeter) => {
+    garde = setTimeout(() => rejeter(new Error(
+      "The browser never answered about the microphone. Look for a permission "
+      + "request near the address bar, allow it, then start again."
+    )), MS_ATTENTE_PERMISSION);
   });
+
+  try {
+    fluxMicro = await Promise.race([
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 1,
+        },
+      }),
+      abandon,
+    ]);
+  } finally {
+    // Sans ca, la promesse perdante rejette dans le vide vingt secondes plus
+    // tard et le navigateur signale un rejet non rattrape sur une seance qui
+    // s'est parfaitement bien passee.
+    clearTimeout(garde);
+  }
+
   contexte.createMediaStreamSource(fluxMicro).connect(noeud);
 }
 
@@ -2050,6 +2117,54 @@ function diagnostic() {
   };
 }
 
+/**
+ * Joue une note de reference dans les enceintes, et rend la main quand elle
+ * s'est TUE. Ajoute le 2026-09-04 (cycle 19) pour le test d'appariement, qui
+ * doit faire entendre une cible avant de demander a l'utilisateur de la
+ * chanter.
+ *
+ * POURQUOI ELLE ATTEND LA FIN, ET C'EST TOUT L'INTERET. Si l'ecoute demarrait
+ * pendant que la note sonne, le microphone entendrait MA note et le detecteur
+ * annoncerait un appariement parfait pour tout le monde, y compris pour
+ * quelqu'un qui n'a pas ouvert la bouche. Un test qui felicite le silence ne
+ * mesure rien. L'appelant enchaine donc sur l'ecoute APRES cette promesse.
+ *
+ * La rampe finale n'est pas une coquetterie. Un oscillateur coupe net produit
+ * un clic large bande, et ce clic tombe pile au moment ou l'ecoute commence.
+ */
+async function jouerNote(hz, ms = 1600) {
+  await preparer(false);
+
+  const sortie = contexte.createGain();
+  const maintenant = contexte.currentTime;
+  const fin = maintenant + ms / 1000;
+
+  // Un timbre un peu riche s'entend mieux qu'une sinusoide sur un haut-parleur
+  // d'ordinateur portable, ou le grave passe mal.
+  const oscillateurs = [];
+  for (const [rang, poids] of [[1, 1], [2, 0.32], [3, 0.12]]) {
+    const osc = contexte.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = hz * rang;
+    const gain = contexte.createGain();
+    gain.gain.value = poids;
+    osc.connect(gain);
+    gain.connect(sortie);
+    oscillateurs.push(osc);
+  }
+
+  sortie.gain.setValueAtTime(0.0001, maintenant);
+  sortie.gain.exponentialRampToValueAtTime(0.22, maintenant + 0.03);
+  sortie.gain.setValueAtTime(0.22, fin - 0.08);
+  sortie.gain.exponentialRampToValueAtTime(0.0001, fin);
+  sortie.connect(contexte.destination);
+
+  for (const osc of oscillateurs) { osc.start(maintenant); osc.stop(fin + 0.02); }
+
+  await new Promise((resoudre) => setTimeout(resoudre, ms + 60));
+  try { sortie.disconnect(); } catch { /* deja detache */ }
+}
+
 /* tessiture-ui.js */
 /**
  * tessiture-ui.js, L'ECRAN DU TEST D'ETENDUE VOCALE.
@@ -2154,22 +2269,36 @@ async function demarrerBalayage(sens) {
   montrer("tess-mesure", true);
   montrer("tess-resultat", false);
 
+  // La consigne dit d'abord ce que la page attend. Une demande de permission
+  // peut mettre plusieurs secondes a apparaitre, et pendant ce temps un ecran
+  // qui dit deja de chanter demande quelque chose que rien n'ecoute encore.
+  const consigne = elt("tess-consigne").textContent;
+  elt("tess-consigne").textContent = "Waiting for the microphone.";
+
   try {
     etat.ecoute = await ecouter((trame) => {
       etat.trames.push(trame);
       rafraichirDirect();
     }, etat.sourceDeTest ?? null);
+    elt("tess-consigne").textContent = consigne;
     elt("tess-erreur").hidden = true;
   } catch (erreur) {
-    // Le refus du microphone est le cas le plus frequent, et une page qui ne
-    // dit rien laisse le visiteur devant un ecran mort.
+    // Trois causes derriere le meme ecran mort, et elles n'appellent pas la
+    // meme manoeuvre. Un refus se leve dans les reglages du navigateur, une
+    // demande sans reponse se rattrape dans la barre d'adresse, et le reste
+    // se raconte avec ses propres mots plutot qu'avec les miens.
     montrer("tess-mesure", false);
     montrer("tess-accueil", true);
+    elt("tess-consigne").textContent = consigne;
     const boite = elt("tess-erreur");
     boite.hidden = false;
-    boite.textContent = "The microphone is not available. Check that your browser "
-      + "is allowed to use it, then try again. Nothing is recorded or uploaded, "
-      + "the whole test runs on your machine.";
+    boite.textContent = erreur && erreur.name === "NotAllowedError"
+      ? "The microphone is blocked for this page. Allow it in your browser "
+        + "settings, then start again. Nothing is recorded and nothing is "
+        + "uploaded, the whole test runs on your machine."
+      : (erreur && erreur.message)
+        || "The microphone is not available. Check that your browser is "
+          + "allowed to use it, then try again.";
     etat.etape = "accueil";
   }
 }

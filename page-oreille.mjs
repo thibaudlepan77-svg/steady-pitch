@@ -187,11 +187,17 @@ ${STYLE}
         <p id="or-suite-texte"></p>
         <p id="or-offre"><a class="lancer" href="./app.html">Open the trainer,
         level 1 free</a></p>
-        <p class="apres" id="or-vente">Or keep it. The trainer, the range test and this one run
-        with the internet switched off for 9.99 on
-        <a href="https://payhip.com/SteadyPitch">the store</a>. One price, once,
-        nothing to unlock afterwards. Everything on this page stays free to use
-        here, what you pay for is keeping it.</p>
+        <p class="apres" id="or-vente">A number tells you where you are, it
+        does not move you. That is what the trainer is for. Thirty exercises
+        across six levels, in the order voices actually learn them, two notes at
+        level 1, a five note scale by level 4, half steps at level 5 once you
+        can hold a note, leaps and the octave at level 6. Every attempt comes
+        back scored in cents on a named note, which is the only way to find out
+        that you are flat on one degree and fine on the rest. Level 1 is free
+        here. All six are <a href="https://payhip.com/b/9RINd">9.99, once</a>,
+        nothing to unlock afterwards, and the files keep working with the
+        internet switched off. Everything on this page stays free to use here
+        whatever you decide.</p>
       </div>
     </div>
   </div>
