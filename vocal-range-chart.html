@@ -70,6 +70,8 @@
     margin:0 0 .3rem}
   .type{font-family:"IBM Plex Mono",monospace;font-size:.9rem;text-align:center;
     color:var(--doux);margin:0 0 1.2rem}
+  .avant{font-size:.86rem;text-align:center;color:var(--doux);
+    border-top:1px solid var(--trait);padding-top:.7rem;margin:0 0 1.2rem}
   .tess-rang{display:flex;align-items:center;gap:.6rem;margin:.22rem 0}
   .tess-nom{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--doux);
     width:6.4rem;flex:none;text-align:right}
@@ -227,6 +229,7 @@
       <div class="bornes" id="tess-bornes"></div>
       <p class="largeur" id="tess-largeur"></p>
       <p class="type" id="tess-type"></p>
+      <p class="avant" id="tess-avant" hidden></p>
       <div id="tess-barres"></div>
       <div class="axe"><span>C2</span><span>C3</span><span>C4</span><span>C5</span><span>C6</span></div>
       <p class="avertissement" id="tess-tronquee" hidden>One end of your range
@@ -2400,6 +2403,118 @@ async function terminerBalayage() {
 // Le resultat
 // ---------------------------------------------------------------------------
 
+/**
+ * LA MESURE PRECEDENTE, GARDEE SUR L'APPAREIL ET NULLE PART AILLEURS.
+ *
+ * POURQUOI ELLE EXISTE. Une tessiture se mesure une fois et on n'y revient
+ * jamais, ce qui fait de cette page un cul-de-sac. Elle a pourtant la seule
+ * chose qui donne envie de revenir, un chiffre a comparer au sien.
+ *
+ * ELLE NE PART PAS AU SERVEUR, et ce n'est pas un detail de confort. La page
+ * promet en toutes lettres que rien de ce qu'on chante ne quitte la machine.
+ * Un historique envoye ailleurs contredirait cette phrase, donc il reste dans
+ * `localStorage` et il se supprime en vidant les donnees du site.
+ */
+const CLE_MEMOIRE = "steady-pitch.tessiture";
+
+/** Sous ce delai, on ne compare pas. Deux essais du meme quart d'heure
+ *  mesurent la meme voix du meme jour, et annoncer une progression entre les
+ *  deux serait mentir avec le bruit de sa propre mesure. */
+const MS_AVANT_COMPARAISON = 6 * 3600 * 1000;
+
+/** Un demi-ton d'ecart n'est pas un progres, c'est la journee qu'on a eue. Le
+ *  cycle 10 a releve une derive naturelle mediane de dix cents en note tenue
+ *  confortable, et bien davantage aux deux bouts. */
+const DEMI_TONS_SIGNIFICATIFS = 2;
+
+/**
+ * `localStorage` LEVE VRAIMENT, ce n'est pas une precaution de principe.
+ * Safari en navigation privee et un navigateur dont on a coupe les cookies
+ * jettent des l'acces, avant meme la lecture. Une page qui tombe la-dessus
+ * n'afficherait aucun resultat, pour un agrement.
+ */
+function lireMemoire() {
+  try {
+    const brut = window.localStorage.getItem(CLE_MEMOIRE);
+    if (!brut) return null;
+    const garde = JSON.parse(brut);
+    if (!Number.isFinite(garde.basMidi) || !Number.isFinite(garde.hautMidi)) return null;
+    if (!Number.isFinite(garde.quand)) return null;
+    return garde;
+  } catch {
+    return null;
+  }
+}
+
+function ecrireMemoire(etendue) {
+  try {
+    window.localStorage.setItem(CLE_MEMOIRE, JSON.stringify({
+      basMidi: etendue.basMidi,
+      hautMidi: etendue.hautMidi,
+      quand: Date.now(),
+    }));
+  } catch {
+    /* Rien a faire. Le resultat du jour s'affiche quand meme. */
+  }
+}
+
+/** `il y a trois semaines` plutot qu'une date, parce que l'ecart est
+ *  l'information et la date ne l'est pas. */
+function ilYA(ms) {
+  const jours = Math.floor(ms / 86400000);
+  if (jours < 1) return "earlier today";
+  if (jours === 1) return "yesterday";
+  if (jours < 14) return `${jours} days ago`;
+  const semaines = Math.round(jours / 7);
+  if (semaines < 9) return `${semaines} weeks ago`;
+  return `${Math.round(jours / 30)} months ago`;
+}
+
+/** Un bout de tessiture, en mots, du point de vue du chanteur. Vers le grave
+ *  c'est `lower`, vers l'aigu c'est `higher`, quel que soit le bout. */
+function bougeDe(avant, apres) {
+  const demiTons = apres - avant;
+  if (Math.abs(demiTons) < DEMI_TONS_SIGNIFICATIFS) return null;
+  const pas = Math.abs(demiTons) === 1 ? "a semitone" : `${Math.abs(demiTons)} semitones`;
+  return `${pas} ${demiTons > 0 ? "higher" : "lower"}`;
+}
+
+/**
+ * COMPARER SANS FLATTER. Le piege evident serait d'annoncer un progres a
+ * chaque demi-ton gagne, ce qui donnerait une bonne nouvelle presque a tous
+ * les coups et ne vaudrait rien. En dessous de deux demi-tons la page dit que
+ * rien n'a bouge, et c'est ce qui rend croyable le jour ou elle dit l'inverse.
+ */
+function comparerAvant(etendue) {
+  const boite = elt("tess-avant");
+  const avant = lireMemoire();
+  ecrireMemoire(etendue);
+
+  if (!avant || Date.now() - avant.quand < MS_AVANT_COMPARAISON) {
+    montrer("tess-avant", false);
+    return;
+  }
+
+  const quand = ilYA(Date.now() - avant.quand);
+  const bornes = `${nommer(avant.basMidi)} to ${nommer(avant.hautMidi)}`;
+  const bas = bougeDe(avant.basMidi, etendue.basMidi);
+  const haut = bougeDe(avant.hautMidi, etendue.hautMidi);
+
+  let verdict;
+  if (!bas && !haut) {
+    verdict = "The same range, within what a voice does from one day to the next.";
+  } else if (bas && haut) {
+    verdict = `Your bottom is ${bas} and your top is ${haut}.`;
+  } else {
+    verdict = bas
+      ? `Your bottom is ${bas}, your top has not moved.`
+      : `Your top is ${haut}, your bottom has not moved.`;
+  }
+
+  boite.textContent = `Last measured on this device ${quand}, ${bornes}. ${verdict}`;
+  montrer("tess-avant", true);
+}
+
 function afficherResultat() {
   etat.etape = "resultat";
   montrer("tess-mesure", false);
@@ -2414,6 +2529,7 @@ function afficherResultat() {
     elt("tess-type").textContent = "";
     montrer("tess-partage", false);
     montrer("tess-tronquee", false);
+    montrer("tess-avant", false);
     return;
   }
 
@@ -2427,6 +2543,7 @@ function afficherResultat() {
       + `or ${classement.second.reference.etiquette}`
     : `Closest voice type, ${classement.meilleur.reference.etiquette}`;
 
+  comparerAvant(etendue);
   montrer("tess-tronquee", etendue.tronquee);
   dessinerBarres(etendue);
   elt("tess-detail").textContent = detailMesure();
