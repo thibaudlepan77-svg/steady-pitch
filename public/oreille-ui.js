@@ -377,6 +377,100 @@ async function lancer(base) {
 // L'AFFICHAGE DU BILAN
 // ---------------------------------------------------------------------------
 
+/**
+ * LA MESURE PRECEDENTE, SUR L APPAREIL ET NULLE PART AILLEURS.
+ *
+ * Meme motif que sur le test d etendue, et pour la meme raison. On passe ce
+ * test une fois et on n a aucune raison de revenir, alors que la seule chose
+ * qui donnerait envie de revenir est un chiffre a soi a comparer. Rien ne part
+ * au serveur, sinon la phrase de la page sur ce qui ne quitte pas la machine
+ * deviendrait fausse.
+ */
+const CLE_MEMOIRE_OREILLE = "steady-pitch.oreille";
+
+/** Sous ce delai on ne compare pas, deux essais du meme quart d heure mesurent
+ *  la meme voix du meme jour. */
+const MS_AVANT_COMPARAISON_OREILLE = 6 * 3600 * 1000;
+
+/**
+ * DIX CENTS AVANT D APPELER CA UN CHANGEMENT, ET LE CHIFFRE VIENT DE LA TAILLE
+ * DE L ECHANTILLON, PAS DE LA PRUDENCE.
+ *
+ * Le bilan est une MEDIANE sur six notes, dont certaines peuvent etre
+ * invalides. Six points, c est peu, et l ecart type d une seance a l autre chez
+ * la meme personne couvre facilement une dizaine de cents. Annoncer un progres
+ * de trois cents reviendrait a feliciter quelqu un pour le bruit de sa propre
+ * mesure, et le jour ou la page annoncerait un vrai progres, plus personne ne
+ * la croirait.
+ */
+const CENTS_SIGNIFICATIFS = 10;
+
+function lireMemoireOreille() {
+  try {
+    const brut = window.localStorage.getItem(CLE_MEMOIRE_OREILLE);
+    if (!brut) return null;
+    const garde = JSON.parse(brut);
+    if (!Number.isFinite(garde.cents) || !Number.isFinite(garde.quand)) return null;
+    return garde;
+  } catch {
+    return null;
+  }
+}
+
+function ecrireMemoireOreille(bilan) {
+  try {
+    window.localStorage.setItem(CLE_MEMOIRE_OREILLE, JSON.stringify({
+      cents: Math.round(bilan.ecartMedian),
+      quand: Date.now(),
+    }));
+  } catch {
+    /* Rien a faire. Le resultat du jour s affiche quand meme. */
+  }
+}
+
+function ilYAOreille(ms) {
+  const jours = Math.floor(ms / 86400000);
+  if (jours < 1) return "earlier today";
+  if (jours === 1) return "yesterday";
+  if (jours < 14) return `${jours} days ago`;
+  const semaines = Math.round(jours / 7);
+  if (semaines < 9) return `${semaines} weeks ago`;
+  return `${Math.round(jours / 30)} months ago`;
+}
+
+/**
+ * ON N ECRIT QUE LES MESURES QUI ONT REUSSI. Un essai ou rien n a ete tenu
+ * n est pas un score de zero, c est une absence de score, et l ecrire
+ * effacerait un vrai chiffre au profit d une panne de microphone.
+ */
+function comparerAvantOreille(bilan) {
+  const boite = elt("or-avant");
+  const avant = lireMemoireOreille();
+  if (bilan.valides > 0) ecrireMemoireOreille(bilan);
+
+  if (!avant || !bilan.valides || Date.now() - avant.quand < MS_AVANT_COMPARAISON_OREILLE) {
+    montrer("or-avant", false);
+    return;
+  }
+
+  const maintenant = Math.round(bilan.ecartMedian);
+  const ecart = avant.cents - maintenant;
+  const quand = ilYAOreille(Date.now() - avant.quand);
+
+  let verdict;
+  if (Math.abs(ecart) < CENTS_SIGNIFICATIFS) {
+    verdict = "That is the same, within what six notes can tell apart.";
+  } else if (ecart > 0) {
+    verdict = `You are ${ecart} cents closer than you were.`;
+  } else {
+    verdict = `You are ${-ecart} cents further off than you were, which one bad `
+      + "morning is enough to explain.";
+  }
+
+  boite.textContent = `Last measured on this device ${quand}, ${avant.cents} cents. ${verdict}`;
+  montrer("or-avant", true);
+}
+
 function afficherBilan() {
   const bilan = composerBilan(etat.resultats);
   etat.bilan = bilan;
@@ -390,6 +484,8 @@ function afficherBilan() {
   elt("or-chiffre").textContent = bilan.valides
     ? `${Math.round(bilan.ecartMedian)} cents off, typically`
     : "";
+
+  comparerAvantOreille(bilan);
 
   const detail = [];
   if (bilan.valides < bilan.tentatives) {

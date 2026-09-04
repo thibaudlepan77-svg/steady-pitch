@@ -138,6 +138,8 @@ ${STYLE}
   .or-vive{font-family:"IBM Plex Mono",monospace;font-size:1.6rem;color:var(--accent);
     min-height:1.9rem}
   .or-verdict{font-size:1.25rem;font-weight:700;margin:.2rem 0 .1rem}
+  .or-avant{font-size:.86rem;color:var(--doux);border-top:1px solid var(--trait);
+    padding-top:.7rem;margin:.9rem 0 0}
   .or-chiffre{font-family:"IBM Plex Mono",monospace;color:var(--accent);
     font-size:1.05rem;margin:0 0 .6rem}
   #or-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
@@ -177,6 +179,7 @@ ${STYLE}
     <div id="or-resultat" hidden>
       <p class="or-verdict" id="or-verdict"></p>
       <p class="or-chiffre" id="or-chiffre"></p>
+      <p class="or-avant" id="or-avant" hidden></p>
       <div id="or-lignes"></div>
       <p class="detail" id="or-detail"></p>
       <div class="actions">
