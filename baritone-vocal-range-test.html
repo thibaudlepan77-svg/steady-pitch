@@ -2270,6 +2270,17 @@ function rafraichirDirect() {
 }
 
 async function demarrerBalayage(sens) {
+  // ON COUPE CE QUI ECOUTE DEJA. Le parcours normal enchaine les deux
+  // balayages proprement, mais rien n'empechait un second appel de laisser le
+  // premier flux branche sur le noeud. Mesure au banc navigateur, deux sources
+  // simultanees, et le detecteur s'accroche a la plus grave des deux, donc le
+  // second balayage rend la note du premier. Avec un microphone la faute est
+  // invisible, il n'y a qu'une source, mais l'ecoute orpheline reste.
+  if (etat.ecoute) {
+    await etat.ecoute.arreter();
+    etat.ecoute = null;
+  }
+
   etat.sens = sens;
   etat.trames = [];
   etat.etape = sens;
