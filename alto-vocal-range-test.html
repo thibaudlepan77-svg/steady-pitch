@@ -2545,15 +2545,37 @@ function proposerLaSuite(etendue) {
 
 /** Ce que la mesure a reellement vu. Un test qui ne montre pas son travail se
  *  croit sur parole, et personne ne croit un inconnu sur parole. */
+/**
+ * ON NOMME LES TRAMES PERDUES, ET PAS SEULEMENT CELLES QU'ON GARDE.
+ *
+ * Le 2026-09-04 un lecteur a signale que la page ne descendait pas sous un
+ * re 2. La cause etait un plancher trop serre qui jetait trente-trois trames
+ * sur trente-trois, a chaque essai, dans une categorie que cette ligne ne
+ * mentionnait meme pas. Elle comptait le silence et rien d'autre.
+ *
+ * Un compteur qu'on n'affiche pas est un compteur que personne ne peut vous
+ * signaler. Il a fallu qu'un inconnu insiste deux fois pour que j'aille lire
+ * un nombre que la page connaissait deja.
+ *
+ * Les categories a zero sont tues. Une ligne pleine de zeros ne se lit pas.
+ */
 function detailMesure() {
   const lignes = [];
   for (const sens of ["grave", "aigu"]) {
     const b = etat.balayages[sens];
     if (!b) continue;
+
+    const jetees = [];
+    if (b.rejets.silence) jetees.push(`${b.rejets.silence} too quiet or too unsure to name`);
+    if (b.rejets.horsMoteur) jetees.push(`${b.rejets.horsMoteur} outside what the detector will vouch for`);
+    if (b.rejets.rupture) jetees.push(`${b.rejets.rupture} jumps too wide to be one gesture`);
+
     lignes.push(
       `${sens === "grave" ? "Low sweep" : "High sweep"}, ${b.tramesRetenues} frames kept, `
-      + `${b.tenues.length} held notes, ${b.rejets.octaveRepliee} octave slips corrected, `
-      + `${b.rejets.silence} silent frames.`);
+      + `${b.tenues.length} held notes`
+      + (b.rejets.octaveRepliee ? `, ${b.rejets.octaveRepliee} octave slips corrected` : "")
+      + (jetees.length ? `, and thrown out, ${jetees.join(", ")}` : "")
+      + ".");
   }
   return lignes.join(" ");
 }
