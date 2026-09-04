@@ -2797,9 +2797,48 @@ function dessinerCarte() {
   return toile;
 }
 
-function telechargerCarte() {
+/**
+ * LA CARTE PART PAR LA FEUILLE DE PARTAGE QUAND IL Y EN A UNE, ET SINON ELLE
+ * SE TELECHARGE.
+ *
+ * POURQUOI CE N'EST PAS UN DETAIL DE CONFORT. Neuf des quinze premiers
+ * visiteurs exterieurs de cette page sont arrives depuis un telephone, sept
+ * sous iOS, mesure Cloudflare du 2026-09-04. Or `a[download]` sur une adresse
+ * de donnees est mal tenu par Safari mobile, il ouvre l'image a la place, et
+ * le visiteur se retrouve devant un PNG sans savoir comment revenir. La carte
+ * est la seule chose de ce site que quelqu'un ait une raison de faire
+ * circuler, donc elle doit partir la ou elle circule.
+ *
+ * L'ADRESSE VOYAGE AVEC L'IMAGE, `texteDePartage` la porte deja. Une image
+ * partagee sans son lien ne ramene personne.
+ */
+function partageDeFichierPossible(fichier) {
+  return typeof navigator.canShare === "function" && navigator.canShare({ files: [fichier] });
+}
+
+async function telechargerCarte() {
   if (!etat.etendue) return;
   const toile = dessinerCarte();
+
+  const blob = await new Promise((resoudre) => toile.toBlob(resoudre, "image/png"));
+  if (blob) {
+    const fichier = new File([blob], "my-vocal-range.png", { type: "image/png" });
+    if (partageDeFichierPossible(fichier)) {
+      try {
+        await navigator.share({
+          files: [fichier],
+          text: texteDePartage(),
+        });
+        return;
+      } catch (erreur) {
+        // Une feuille de partage refermee sans choisir leve `AbortError`. Ce
+        // n'est pas une panne, l'utilisateur a change d'avis, et lui proposer
+        // un telechargement derriere son dos serait pire que de ne rien faire.
+        if (erreur && erreur.name === "AbortError") return;
+      }
+    }
+  }
+
   const lien = document.createElement("a");
   lien.download = "my-vocal-range.png";
   lien.href = toile.toDataURL("image/png");
@@ -2826,6 +2865,12 @@ elt("tess-suivant").addEventListener("click", () => terminerBalayage());
 elt("tess-recommencer").addEventListener("click", recommencer);
 elt("tess-copier").addEventListener("click", copierResultat);
 elt("tess-image").addEventListener("click", telechargerCarte);
+
+// Le libelle est fixe au chargement, pas au clic, parce qu'un bouton qui
+// annonce un telechargement et ouvre une feuille de partage a menti.
+if (partageDeFichierPossible(new File([""], "s.png", { type: "image/png" }))) {
+  elt("tess-image").textContent = "Share my result";
+}
 
 /** La porte du banc en navigateur. Elle remplace le microphone par un son de
  *  frequence connue, exactement comme `ecouter` le prevoit. */
