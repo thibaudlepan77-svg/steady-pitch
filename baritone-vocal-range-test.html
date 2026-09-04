@@ -2507,6 +2507,14 @@ function afficherResultat() {
     montrer("tess-partage", false);
     montrer("tess-tronquee", false);
     montrer("tess-avant", false);
+    // L'ECRAN VIDE MONTRE SA DONNEE LUI AUSSI, ET C'EST LA QU'ELLE SERT LE
+    // PLUS. Cette branche ne touchait ni le detail ni les courbes, donc un
+    // essai sans resultat affichait le compte et le trace de l'essai
+    // PRECEDENT, ce qui est pire que de ne rien montrer. Et quelqu'un qui
+    // n'obtient pas de note est justement celui qui a besoin de voir ce que le
+    // microphone a entendu et sur quel critere tout est parti.
+    elt("tess-detail").textContent = detailMesure();
+    dessinerLesDeuxCourbes();
     return;
   }
 
