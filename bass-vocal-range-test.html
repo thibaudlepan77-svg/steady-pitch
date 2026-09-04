@@ -156,11 +156,11 @@
       <h2 class="suite-titre" id="tess-suite-titre"></h2>
       <p id="tess-suite-texte"></p>
       <p><a class="lancer" href="./app.html">Open the trainer, level 1 free</a></p>
-      <p class="apres" id="tess-vente">Or keep it. This range test and all six
-      levels of the trainer are two files that run with the internet switched
-      off, 9.99 on <a href="https://payhip.com/SteadyPitch">the store</a>. One
-      price, once, nothing to unlock afterwards. Everything on this page stays
-      free to use here, what you pay for is keeping it.</p>
+      <p class="apres" id="tess-vente">Knowing your range does not widen it,
+      and it does nothing for the notes inside it. That is what the trainer is
+      for, thirty exercises over six levels that score every attempt in cents on
+      a named note. Level 1 is free here, all six are
+      <a href="https://payhip.com/b/9RINd">9.99 once</a>.</p>
     </div>
   </div>
 
@@ -821,6 +821,8 @@ const TEXTES                        = {
     ecart_moyen: "Average error",
     choisir_entree: "How do you want to work on your pitch",
     tessiture: "Your range",
+    tess_basse: "Bass", tess_baryton: "Baritone", tess_tenor: "Tenor", tess_alto: "Alto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Child", tess_large: "Not sure",
     recommencer: "Start again",
     ecoute_en_cours: "Listening",
     details_techniques: "Technical details",
@@ -843,6 +845,8 @@ const TEXTES                        = {
     ecart_moyen: "Ecart moyen",
     choisir_entree: "Choisissez comment travailler votre justesse",
     tessiture: "Votre tessiture",
+    tess_basse: "Basse", tess_baryton: "Baryton", tess_tenor: "Tenor", tess_alto: "Alto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Enfant", tess_large: "Je ne sais pas",
     recommencer: "Recommencer",
     ecoute_en_cours: "A l'ecoute",
     details_techniques: "Details techniques",
@@ -865,6 +869,8 @@ const TEXTES                        = {
     ecart_moyen: "Error medio",
     choisir_entree: "Como quieres trabajar tu afinacion",
     tessiture: "Tu tesitura",
+    tess_basse: "Bajo", tess_baryton: "Baritono", tess_tenor: "Tenor", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Nino", tess_large: "No lo se",
     recommencer: "Empezar de nuevo",
     ecoute_en_cours: "Escuchando",
     details_techniques: "Detalles tecnicos",
@@ -887,6 +893,8 @@ const TEXTES                        = {
     ecart_moyen: "Mittlere Abweichung",
     choisir_entree: "Wie willst du an deiner Intonation arbeiten",
     tessiture: "Dein Stimmumfang",
+    tess_basse: "Bass", tess_baryton: "Bariton", tess_tenor: "Tenor", tess_alto: "Alt",
+    tess_mezzo: "Mezzo", tess_soprano: "Sopran", tess_enfant: "Kind", tess_large: "Weiss ich nicht",
     recommencer: "Neu beginnen",
     ecoute_en_cours: "Hoert zu",
     details_techniques: "Technische Details",
@@ -909,6 +917,8 @@ const TEXTES                        = {
     ecart_moyen: "Errore medio",
     choisir_entree: "Come vuoi lavorare sulla tua intonazione",
     tessiture: "La tua estensione",
+    tess_basse: "Basso", tess_baryton: "Baritono", tess_tenor: "Tenore", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Bambino", tess_large: "Non lo so",
     recommencer: "Ricomincia",
     ecoute_en_cours: "In ascolto",
     details_techniques: "Dettagli tecnici",
@@ -931,6 +941,8 @@ const TEXTES                        = {
     ecart_moyen: "Erro medio",
     choisir_entree: "Como quer trabalhar a sua afinacao",
     tessiture: "A sua tessitura",
+    tess_basse: "Baixo", tess_baryton: "Baritono", tess_tenor: "Tenor", tess_alto: "Contralto",
+    tess_mezzo: "Mezzo", tess_soprano: "Soprano", tess_enfant: "Crianca", tess_large: "Nao sei",
     recommencer: "Recomecar",
     ecoute_en_cours: "A escutar",
     details_techniques: "Detalhes tecnicos",
@@ -2080,6 +2092,54 @@ function diagnostic() {
         ? "le microphone exige une page servie en HTTPS, ou en local"
         : "",
   };
+}
+
+/**
+ * Joue une note de reference dans les enceintes, et rend la main quand elle
+ * s'est TUE. Ajoute le 2026-09-04 (cycle 19) pour le test d'appariement, qui
+ * doit faire entendre une cible avant de demander a l'utilisateur de la
+ * chanter.
+ *
+ * POURQUOI ELLE ATTEND LA FIN, ET C'EST TOUT L'INTERET. Si l'ecoute demarrait
+ * pendant que la note sonne, le microphone entendrait MA note et le detecteur
+ * annoncerait un appariement parfait pour tout le monde, y compris pour
+ * quelqu'un qui n'a pas ouvert la bouche. Un test qui felicite le silence ne
+ * mesure rien. L'appelant enchaine donc sur l'ecoute APRES cette promesse.
+ *
+ * La rampe finale n'est pas une coquetterie. Un oscillateur coupe net produit
+ * un clic large bande, et ce clic tombe pile au moment ou l'ecoute commence.
+ */
+async function jouerNote(hz, ms = 1600) {
+  await preparer(false);
+
+  const sortie = contexte.createGain();
+  const maintenant = contexte.currentTime;
+  const fin = maintenant + ms / 1000;
+
+  // Un timbre un peu riche s'entend mieux qu'une sinusoide sur un haut-parleur
+  // d'ordinateur portable, ou le grave passe mal.
+  const oscillateurs = [];
+  for (const [rang, poids] of [[1, 1], [2, 0.32], [3, 0.12]]) {
+    const osc = contexte.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = hz * rang;
+    const gain = contexte.createGain();
+    gain.gain.value = poids;
+    osc.connect(gain);
+    gain.connect(sortie);
+    oscillateurs.push(osc);
+  }
+
+  sortie.gain.setValueAtTime(0.0001, maintenant);
+  sortie.gain.exponentialRampToValueAtTime(0.22, maintenant + 0.03);
+  sortie.gain.setValueAtTime(0.22, fin - 0.08);
+  sortie.gain.exponentialRampToValueAtTime(0.0001, fin);
+  sortie.connect(contexte.destination);
+
+  for (const osc of oscillateurs) { osc.start(maintenant); osc.stop(fin + 0.02); }
+
+  await new Promise((resoudre) => setTimeout(resoudre, ms + 60));
+  try { sortie.disconnect(); } catch { /* deja detache */ }
 }
 
 /* tessiture-ui.js */
