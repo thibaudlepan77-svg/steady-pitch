@@ -82,13 +82,34 @@ import { cents, hzVersMidi } from "./notation.js";
  * demi-ton laisse passer un tremblement sans jamais laisser passer un
  * demi-ton, qui changerait la note affichee.
  */
+/**
+ * LA BORNE BASSE PORTE UN DEMI-DEMI-TON DE MARGE, ET CE CHIFFRE VIENT D'UN
+ * RAPPORT D'UTILISATEUR.
+ *
+ * Le 2026-09-04 quelqu'un a signale que la page ne descendait pas sous un re 2.
+ * Banc navigateur sur la page en ligne, un do 2 de synthese donne 33 trames,
+ * confiance 0,642, hauteur mediane lue a 65 Hz. Toutes les 33 sont rejetees
+ * `horsMoteur`, parce que 65 tombe sous 65,41.
+ *
+ * La borne etait posee sur la valeur EXACTE du do 2, appliquee a une valeur
+ * MESUREE. Une note juste au plancher se lit forcement un peu au-dessus ou un
+ * peu au-dessous, donc une borne sans marge refuse une note sur deux au
+ * plancher meme quand elle est parfaite. Le plancher annonce devenait
+ * inatteignable et le plancher reel etait un demi-ton plus haut, sans que rien
+ * ne le dise.
+ *
+ * 63,57 Hz, c'est le do 2 moins cinquante cents. Une lecture est donc acceptee
+ * si elle est A UN QUART DE TON du plancher annonce. Un si 1, lui, ne passe pas
+ * davantage qu'avant, il est deja arrete par la confiance, 0,511 mesuree au
+ * meme banc, sous le seuil de 0,55.
+ */
 export const REGLAGES_TESSITURE                    = {
   confianceMin: 0.55,
   sautMaxCents: 700,
   toleranceOctaveCents: 60,
   tramesTenue: 4,
   etalementTenueCents: 90,
-  moteurHzMin: 65.41,
+  moteurHzMin: 63.57,
   moteurHzMax: 2093.0,
 };
 
