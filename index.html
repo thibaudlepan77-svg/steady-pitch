@@ -875,25 +875,45 @@ async function allumer() {
   bouton.disabled = true;
   bouton.textContent = "asking for the microphone";
 
+  // VINGT SECONDES ET ON ABANDONNE. `getUserMedia` ne se resout jamais et ne
+  // rejette jamais tant que personne ne repond a la demande de permission, donc
+  // sans cette course le bouton reste sur `asking for the microphone` jusqu'a
+  // la fin des temps et le visiteur croit la page morte. Un refus franc, lui,
+  // rejette proprement, c'est le silence qui pose probleme.
+  let garde;
+  const abandon = new Promise((_, rejeter) => {
+    garde = setTimeout(() => rejeter(new Error("sans reponse")), 20000);
+  });
+
   try {
-    flux = await navigator.mediaDevices.getUserMedia({
-      audio: {
-        // LES TROIS QUI DETRUIRAIENT LA MESURE, coupees comme dans le produit.
-        // Elles sont concues pour la parole au telephone, elles ecrasent la
-        // dynamique et deforment le spectre.
-        echoCancellation: false,
-        noiseSuppression: false,
-        autoGainControl: false,
-        channelCount: 1,
-      },
-    });
-  } catch {
+    flux = await Promise.race([
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          // LES TROIS QUI DETRUIRAIENT LA MESURE, coupees comme dans le produit.
+          // Elles sont concues pour la parole au telephone, elles ecrasent la
+          // dynamique et deforment le spectre.
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 1,
+        },
+      }),
+      abandon,
+    ]);
+  } catch (erreur) {
     bouton.disabled = false;
     bouton.textContent = "Turn the microphone on";
-    elt("mon-erreur").textContent = window.isSecureContext
-      ? "The browser refused the microphone. Nothing else on this page needs it."
-      : "A microphone needs a page served over HTTPS. This one is not.";
+    elt("mon-erreur").textContent = !window.isSecureContext
+      ? "A microphone needs a page served over HTTPS. This one is not."
+      : erreur && erreur.message === "sans reponse"
+        ? "The browser never answered about the microphone. Look for a "
+          + "permission request near the address bar, allow it, then press "
+          + "the button again."
+        : "The browser refused the microphone. Nothing else on this page "
+          + "needs it.";
     return;
+  } finally {
+    clearTimeout(garde);
   }
 
   contexte = new (window.AudioContext || window.webkitAudioContext)();

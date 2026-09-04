@@ -2009,16 +2009,54 @@ async function degourdir() {
   msDeChauffe = Math.round(performance.now() - depart);
 }
 
+/**
+ * LE DELAI DE GARDE SUR LA DEMANDE DE MICROPHONE, ET IL VIENT D'UN RAPPORT
+ * D'UTILISATEUR, pas d'une inquietude de bureau. `getUserMedia` ne se resout
+ * jamais ET ne rejette jamais quand personne ne repond ni oui ni non a la
+ * demande de permission. Aucun `catch` ne part, l'ecran de mesure reste
+ * affiche pour toujours, et le visiteur conclut que la page est cassee. Un
+ * refus franc, lui, rejette proprement et se raconte tout seul.
+ *
+ * Ca n'arrive pas qu'au navigateur pilote. Un onglet bascule en arriere-plan
+ * pendant que la demande s'affiche, une demande ecartee sans clic, un materiel
+ * qui met une eternite a s'ouvrir, tombent tous au meme endroit.
+ *
+ * La garde est ici et non dans chaque ecran, parce que le piege est dans
+ * l'appel et pas dans l'interface. Le test d'appariement portait deja la
+ * sienne, le test d'etendue n'en avait aucune, et c'est celui-la qu'un
+ * inconnu a essaye.
+ */
+const MS_ATTENTE_PERMISSION = 20000;
+
 async function brancherMicro() {
-  fluxMicro = await navigator.mediaDevices.getUserMedia({
-    audio: {
-      // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
-      echoCancellation: false,
-      noiseSuppression: false,
-      autoGainControl: false,
-      channelCount: 1,
-    },
+  let garde;
+  const abandon = new Promise((_, rejeter) => {
+    garde = setTimeout(() => rejeter(new Error(
+      "The browser never answered about the microphone. Look for a permission "
+      + "request near the address bar, allow it, then start again."
+    )), MS_ATTENTE_PERMISSION);
   });
+
+  try {
+    fluxMicro = await Promise.race([
+      navigator.mediaDevices.getUserMedia({
+        audio: {
+          // LES TROIS QUI DETRUIRAIENT LA MESURE. Voir le piege n2.
+          echoCancellation: false,
+          noiseSuppression: false,
+          autoGainControl: false,
+          channelCount: 1,
+        },
+      }),
+      abandon,
+    ]);
+  } finally {
+    // Sans ca, la promesse perdante rejette dans le vide vingt secondes plus
+    // tard et le navigateur signale un rejet non rattrape sur une seance qui
+    // s'est parfaitement bien passee.
+    clearTimeout(garde);
+  }
+
   contexte.createMediaStreamSource(fluxMicro).connect(noeud);
 }
 
@@ -2303,22 +2341,36 @@ async function demarrerBalayage(sens) {
   montrer("tess-mesure", true);
   montrer("tess-resultat", false);
 
+  // La consigne dit d'abord ce que la page attend. Une demande de permission
+  // peut mettre plusieurs secondes a apparaitre, et pendant ce temps un ecran
+  // qui dit deja de chanter demande quelque chose que rien n'ecoute encore.
+  const consigne = elt("tess-consigne").textContent;
+  elt("tess-consigne").textContent = "Waiting for the microphone.";
+
   try {
     etat.ecoute = await ecouter((trame) => {
       etat.trames.push(trame);
       rafraichirDirect();
     }, etat.sourceDeTest ?? null);
+    elt("tess-consigne").textContent = consigne;
     elt("tess-erreur").hidden = true;
   } catch (erreur) {
-    // Le refus du microphone est le cas le plus frequent, et une page qui ne
-    // dit rien laisse le visiteur devant un ecran mort.
+    // Trois causes derriere le meme ecran mort, et elles n'appellent pas la
+    // meme manoeuvre. Un refus se leve dans les reglages du navigateur, une
+    // demande sans reponse se rattrape dans la barre d'adresse, et le reste
+    // se raconte avec ses propres mots plutot qu'avec les miens.
     montrer("tess-mesure", false);
     montrer("tess-accueil", true);
+    elt("tess-consigne").textContent = consigne;
     const boite = elt("tess-erreur");
     boite.hidden = false;
-    boite.textContent = "The microphone is not available. Check that your browser "
-      + "is allowed to use it, then try again. Nothing is recorded or uploaded, "
-      + "the whole test runs on your machine.";
+    boite.textContent = erreur && erreur.name === "NotAllowedError"
+      ? "The microphone is blocked for this page. Allow it in your browser "
+        + "settings, then start again. Nothing is recorded and nothing is "
+        + "uploaded, the whole test runs on your machine."
+      : (erreur && erreur.message)
+        || "The microphone is not available. Check that your browser is "
+          + "allowed to use it, then try again.";
     etat.etape = "accueil";
   }
 }
