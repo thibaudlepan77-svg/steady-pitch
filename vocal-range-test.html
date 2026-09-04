@@ -2375,7 +2375,7 @@ function lireMemoire() {
     const brut = window.localStorage.getItem(CLE_MEMOIRE);
     if (!brut) return null;
     const garde = JSON.parse(brut);
-    if (!Number.isFinite(garde.basMidi) || !Number.isFinite(garde.hautMidi)) return null;
+    if (!Number.isInteger(garde.basMidi) || !Number.isInteger(garde.hautMidi)) return null;
     if (!Number.isFinite(garde.quand)) return null;
     return garde;
   } catch {
@@ -2385,9 +2385,12 @@ function lireMemoire() {
 
 function ecrireMemoire(etendue) {
   try {
+    // ARRONDI A L'ECRITURE. `basMidi` sort de l'interpolation parabolique, donc
+    // il vaut 45.00000148 et non 45. Range tel quel, l'ecart entre deux mesures
+    // ressort a `2.0000148620576 semitones lower` dans la phrase affichee.
     window.localStorage.setItem(CLE_MEMOIRE, JSON.stringify({
-      basMidi: etendue.basMidi,
-      hautMidi: etendue.hautMidi,
+      basMidi: Math.round(etendue.basMidi),
+      hautMidi: Math.round(etendue.hautMidi),
       quand: Date.now(),
     }));
   } catch {
@@ -2410,7 +2413,7 @@ function ilYA(ms) {
 /** Un bout de tessiture, en mots, du point de vue du chanteur. Vers le grave
  *  c'est `lower`, vers l'aigu c'est `higher`, quel que soit le bout. */
 function bougeDe(avant, apres) {
-  const demiTons = apres - avant;
+  const demiTons = Math.round(apres) - Math.round(avant);
   if (Math.abs(demiTons) < DEMI_TONS_SIGNIFICATIFS) return null;
   const pas = Math.abs(demiTons) === 1 ? "a semitone" : `${Math.abs(demiTons)} semitones`;
   return `${pas} ${demiTons > 0 ? "higher" : "lower"}`;
