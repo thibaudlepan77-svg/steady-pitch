@@ -91,7 +91,10 @@
   .suite-titre{font-size:1.05rem;margin:0 0 .4rem;font-weight:700;border:none;padding:0}
 </style>
 <style>
-#gr-resultat table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+/* Meme raison que sur la page a un seul chanteur, 62 px de debordement mesures
+   a 375 px. Le tableau glisse, pas la page. */
+#gr-resultat { overflow-x: auto; }
+#gr-resultat table { border-collapse: collapse; width: 100%; min-width: 20rem; margin-top: 1rem; }
 #gr-resultat th, #gr-resultat td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid rgba(128,128,128,.3); }
 #gr-resultat td.note { white-space: nowrap; font-variant-numeric: tabular-nums; }
 #gr-voix { font: inherit; width: 100%; max-width: 22rem; min-height: 7rem; padding: .5rem; }

@@ -91,7 +91,12 @@
   .suite-titre{font-size:1.05rem;margin:0 0 .4rem;font-weight:700;border:none;padding:0}
 </style>
 <style>
-#chansons-resultat table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+/* Le tableau a quatre colonnes et ne rentre pas dans 375 px. Sans ce conteneur
+   c'est la PAGE qui deborde, mesure du 2026-09-05, 63 px de trop sur un iPhone
+   SE, et il faut pousser le texte de cote pour lire une phrase. Ici seul le
+   tableau glisse, la prose reste en place. */
+#chansons-resultat { overflow-x: auto; }
+#chansons-resultat table { border-collapse: collapse; width: 100%; min-width: 20rem; margin-top: 1rem; }
 #chansons-resultat th, #chansons-resultat td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid rgba(128,128,128,.3); }
 #chansons-resultat th { font-weight: 600; }
 #chansons-resultat td.note { white-space: nowrap; font-variant-numeric: tabular-nums; }
