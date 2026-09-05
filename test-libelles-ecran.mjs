@@ -118,6 +118,44 @@ for (const langue of LANGUES) {
   }
 }
 
+// ---------------------------------------------------------------------------
+console.log("\n3. LA COPIE DE app.js DANS app.html NE DIVERGE PAS");
+
+// `app.html` est un paquet assemble, pose a la main, qui porte une copie de
+// chaque module sous un en-tete `/* ===== nom.js ===== */`. Aucun script ne le
+// regenere. J'ai deja corrige un libelle des deux cotes ce cycle, et la
+// prochaine fois j'en oublierai un, donc le banc regarde.
+//
+// Les deux textes ne peuvent pas etre identiques, l'assembleur enveloppe chaque
+// module dans sa propre portee. On compare donc les LIGNES DE CODE, sans
+// l'indentation, les lignes vides ni les commentaires, qui ne changent rien au
+// comportement et qui bougent a chaque reformatage.
+
+// Les `import` et les `export` sont la seule chose que l'assembleur REECRIT,
+// il les remplace par une destructuration de la portee du module. Les comparer
+// ferait rougir le banc en permanence sur une transformation voulue, ce qui le
+// rendrait inutile en une journee.
+function lignesDeCode(source) {
+  return source.split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith("//") && !l.startsWith("*") && !l.startsWith("/*"))
+    .filter((l) => !/^(import|export)\b/.test(l));
+}
+
+const html = readFileSync(APP_HTML, "utf-8");
+const debutSection = html.indexOf("/* ===== app.js ===== */");
+verifier("app.html porte bien une section app.js", debutSection >= 0);
+
+if (debutSection >= 0) {
+  const dansHtml = new Set(lignesDeCode(html.slice(debutSection)));
+  const manquantes = lignesDeCode(readFileSync(APP_JS, "utf-8"))
+    .filter((l) => !dansHtml.has(l));
+  verifier("chaque ligne de public/app.js se retrouve dans app.html",
+    manquantes.length === 0,
+    `${manquantes.length} ligne(s) absentes, la premiere est ` +
+    JSON.stringify(manquantes[0] ?? "").slice(0, 100));
+}
+
 console.log("\n" + "=".repeat(70));
 if (echecs === 0) {
   console.log(`RESULTAT, ${combinaisons} ecrans composes sur ${LANGUES.length} langues, ZERO doublon.`);
