@@ -109,6 +109,10 @@
 which songs stay in that band. Not the notes you can just about scrape once on
 a good morning, the ones you could hold through a whole chorus.</p>
 
+<p>Allow a few semitones of transposition and the list gets a lot longer. Each
+row then tells you which way to move the song and by how much, which is what
+you would be doing anyway with a capo or a backing track pitched down.</p>
+
 <p>If you do not know your range, <a href="./vocal-range-test.html">the range
 test</a> takes about a minute and hands you two note names you can paste in
 here.</p>
@@ -118,8 +122,8 @@ here.</p>
     <input id="ch-bas" type="text" value="A3" autocomplete="off" spellcheck="false"></label>
   <label>Highest comfortable note
     <input id="ch-haut" type="text" value="E5" autocomplete="off" spellcheck="false"></label>
-  <label>Room to spare
-    <input id="ch-marge" type="number" value="0" min="-6" max="6" step="1"></label>
+  <label>Transpose by up to
+    <input id="ch-marge" type="number" value="0" min="0" max="12" step="1"> semitones</label>
 </div>
 
 <p class="apres" id="ch-compte"></p>
@@ -127,6 +131,10 @@ here.</p>
 <div id="chansons-resultat"></div>
 
 <h2>What the numbers mean</h2>
+
+<p>The last column is the smallest move that fits the song into your band. A
+song wider than your own range never appears whatever you allow, because
+transposing moves a melody without narrowing it.</p>
 
 <p>The two notes on each row are where the melody spends its time, measured on
 the sung line and weighted by how long each note is held. A quaver passed
@@ -197,6 +205,25 @@ const marge = document.getElementById("ch-marge");
 const compte = document.getElementById("ch-compte");
 const sortie = document.getElementById("chansons-resultat");
 
+/* Le decalage minimal, en demi-tons, qui fait tenir une chanson dans la bande
+ * demandee. Zero si elle y tient deja, null si elle est plus large que la bande
+ * et qu'aucune transposition ne peut donc l'y faire entrer.
+ *
+ * Il faut cb + s >= b et ch + s <= h, donc s vit dans [b - cb, h - ch]. Si cet
+ * intervalle contient zero la chanson tient telle quelle, sinon on prend celle
+ * de ses deux bornes qui est la plus proche de zero. */
+function decalageNecessaire(chanson, b, h) {
+  const min = b - chanson[2];
+  const max = h - chanson[3];
+  if (min > max) return null;
+  if (min <= 0 && max >= 0) return 0;
+  return min > 0 ? min : max;
+}
+
+const enDemiTons = (s) =>
+  s === 0 ? "as it is"
+    : (s > 0 ? "up " : "down ") + Math.abs(s) + (Math.abs(s) === 1 ? " semitone" : " semitones");
+
 function afficher() {
   const b = lireNote(bas.value);
   const h = lireNote(haut.value);
@@ -205,21 +232,43 @@ function afficher() {
     sortie.innerHTML = "";
     return;
   }
-  const jeu = Number(marge.value) || 0;
-  const tiennent = CHANSONS.filter((c) => c[2] >= b - jeu && c[3] <= h + jeu);
-  compte.textContent = tiennent.length + " of " + CHANSONS.length +
-    " songs sit inside " + nommer(b) + " to " + nommer(h) +
-    (jeu ? " with " + jeu + " semitones of slack" : "") + ".";
-  if (!tiennent.length) {
-    sortie.innerHTML = "<p>Nothing fits. Widen the band, or add a semitone or two of slack.</p>";
+  const jeu = Math.max(0, Number(marge.value) || 0);
+
+  const classees = [];
+  for (const c of CHANSONS) {
+    const s = decalageNecessaire(c, b, h);
+    if (s === null || Math.abs(s) > jeu) continue;
+    classees.push({ chanson: c, decalage: s });
+  }
+  /* Ce qui tient tel quel d'abord, puis le decalage le plus petit. A egalite,
+   * l'artiste, pour que la liste ne se remelange pas a chaque frappe. */
+  classees.sort((x, y) =>
+    Math.abs(x.decalage) - Math.abs(y.decalage) ||
+    x.chanson[1].localeCompare(y.chanson[1]) ||
+    x.chanson[0].localeCompare(y.chanson[0]));
+
+  const telQuel = classees.filter((x) => x.decalage === 0).length;
+  compte.textContent = telQuel + " of " + CHANSONS.length + " songs sit inside " +
+    nommer(b) + " to " + nommer(h) + " as they are" +
+    (jeu ? ", and " + (classees.length - telQuel) + " more fit if you transpose by up to " +
+      jeu + (jeu === 1 ? " semitone" : " semitones") : "") + ".";
+
+  if (!classees.length) {
+    sortie.innerHTML = "<p>Nothing fits. Widen the band, or allow a few semitones " +
+      "of transposition.</p>";
     return;
   }
-  const lignes = tiennent.map((c) =>
-    "<tr title=\"full melody spans " + nommer(c[4]) + " to " + nommer(c[5]) + "\">" +
+  /* Attributs en apostrophes simples, pas en guillemets. Ce fragment traverse
+     un litteral de gabarit avant d'atterrir dans la page, et un guillemet
+     echappe y perd son echappement en route. Le HTML accepte les deux. */
+  const lignes = classees.map(({ chanson: c, decalage: s }) =>
+    "<tr title='melody spans " + nommer(c[4]) + " to " + nommer(c[5]) + "'>" +
     "<td>" + c[0] + "</td><td>" + c[1] + "</td>" +
-    "<td class=\"note\">" + nommer(c[2]) + " to " + nommer(c[3]) + "</td></tr>").join("");
+    "<td class='note'>" + nommer(c[2]) + " to " + nommer(c[3]) + "</td>" +
+    "<td class='note'>" + enDemiTons(s) + "</td></tr>").join("");
   sortie.innerHTML = "<table><thead><tr><th>Song</th><th>Artist</th>" +
-    "<th>Sits between</th></tr></thead><tbody>" + lignes + "</tbody></table>";
+    "<th>Sits between</th><th>Sing it</th></tr></thead><tbody>" + lignes +
+    "</tbody></table>";
 }
 
 /* Le test d'etendue envoie ici les deux notes qu'il vient de mesurer, sous la
