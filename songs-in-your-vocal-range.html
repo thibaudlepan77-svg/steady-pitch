@@ -222,7 +222,21 @@ function afficher() {
     "<th>Sits between</th></tr></thead><tbody>" + lignes + "</tbody></table>";
 }
 
+/* Le test d'etendue envoie ici les deux notes qu'il vient de mesurer, sous la
+ * forme #A3-E5. Sans ca la personne qui vient de les lire a l'ecran doit les
+ * recopier a la main, et c'est exactement le moment ou elle abandonne. */
+function prendreLesNotesDeLAdresse() {
+  const brut = decodeURIComponent(location.hash.replace(/^#/, ""));
+  const m = /^([A-Ga-g][#b]?-?\d)\s*(?:-|to|a)\s*([A-Ga-g][#b]?-?\d)$/.exec(brut.trim());
+  if (!m) return;
+  if (lireNote(m[1]) === null || lireNote(m[2]) === null) return;
+  bas.value = m[1];
+  haut.value = m[2];
+}
+
 for (const champ of [bas, haut, marge]) champ.addEventListener("input", afficher);
+window.addEventListener("hashchange", () => { prendreLesNotesDeLAdresse(); afficher(); });
+prendreLesNotesDeLAdresse();
 afficher();
 </script>
 <!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "6e7ddbc8884540f49b6e0db4841dbd2f"}'></script><!-- End Cloudflare Web Analytics -->

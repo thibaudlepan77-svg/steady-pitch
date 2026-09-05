@@ -173,7 +173,7 @@
       working out which to do next.</strong> Clicking one of those two tells me,
       and does nothing else.</p>
       <ul>
-        <li><a id="veut-songs" href="https://thibaudlepan77-svg.github.io/steady-pitch/next/songs.html">The songs that actually sit inside your range</a>, free, it exists now</li>
+        <li><a id="veut-songs" data-porte-letendue href="https://thibaudlepan77-svg.github.io/steady-pitch/next/songs.html">The songs that actually sit inside your range</a>, free, it exists now</li>
         <li><a id="veut-phone" href="https://thibaudlepan77-svg.github.io/steady-pitch/next/phone.html">The trainer, working properly on a phone</a>, about 5 dollars, once</li>
         <li><a id="veut-choir" href="https://thibaudlepan77-svg.github.io/steady-pitch/next/choir.html">A range sheet for a whole choir</a>, about 9 dollars, once</li>
       </ul>
@@ -198,10 +198,24 @@
   guess. Clicking either of those tells me which. No payment, no email, no
   signup.</p>
   <ul>
-    <li><a id="veut2-songs" href="https://thibaudlepan77-svg.github.io/steady-pitch/next/songs.html">The songs that actually sit inside your range</a>, free, it exists now</li>
+    <li><a id="veut2-songs" data-porte-letendue href="https://thibaudlepan77-svg.github.io/steady-pitch/next/songs.html">The songs that actually sit inside your range</a>, free, it exists now</li>
     <li><a id="veut2-phone" href="https://thibaudlepan77-svg.github.io/steady-pitch/next/phone.html">The trainer, working properly on a phone</a>, about 5 dollars, once</li>
     <li><a id="veut2-choir" href="https://thibaudlepan77-svg.github.io/steady-pitch/next/choir.html">A range sheet for a whole choir</a>, about 9 dollars, once</li>
   </ul>
+  <script>
+document.addEventListener("click", (e) => {
+  const lien = e.target.closest && e.target.closest("a[data-porte-letendue]");
+  if (!lien) return;
+  const bornes = document.getElementById("tess-bornes");
+  const lu = bornes && bornes.textContent.trim();
+  /* Pas une barre inverse dans cette expression, et c'est voulu. Elle
+     traverse un litteral de gabarit puis un fichier HTML, et le premier
+     jet ecrit avec des raccourcis a perdu les siennes en route. Le banc a
+     vu arriver un motif ou il ne restait que la lettre d. */
+  const m = lu && /^([A-G][#b]?-?[0-9])[ ]+to[ ]+([A-G][#b]?-?[0-9])$/.exec(lu);
+  if (m) lien.hash = m[1] + "-" + m[2];
+});
+</script>
   <!-- DEMANDE-VISIBLE:FIN -->
 
   <h2>How to get a result you can trust</h2>
