@@ -139,6 +139,8 @@ for (const option of OPTIONS) {
  */
 const DEBUT = "<!-- DEMANDE:DEBUT -->";
 const FIN = "<!-- DEMANDE:FIN -->";
+const DEBUT_VISIBLE = "<!-- DEMANDE-VISIBLE:DEBUT -->";
+const FIN_VISIBLE = "<!-- DEMANDE-VISIBLE:FIN -->";
 
 const bloc = `${DEBUT}
     <div class="apres" id="tess-demande">
@@ -149,6 +151,32 @@ ${OPTIONS.map((o) => `        <li><a id="veut-${o.nom}" href="${RACINE}next/${o.
       </ul>
     </div>
     ${FIN}`;
+
+/**
+ * ET LE MEME BLOC, VISIBLE SANS AVOIR PASSE LE TEST.
+ *
+ * POURQUOI IL EN FAUT DEUX, ET C'EST UNE QUESTION DE DEBIT. Le premier bloc vit
+ * dans le panneau de resultat, donc il n'apparait qu'apres un balayage termine.
+ * C'est le meilleur moment pour demander, la personne vient d'obtenir son
+ * chiffre. Mais le compteur du 2026-09-05 donne 54 visites sur cette page et un
+ * seul clic releve sur le bouton de demarrage. **A ce rythme, la mesure ne
+ * rendra aucun verdict avant le 23 septembre**, et une mesure qui arrive apres
+ * la decision ne sert a rien.
+ *
+ * Le second bloc est donc dans la prose, visible en descendant, sans condition.
+ * Il vise les memes chemins, donc le comptage reste le meme et je ne pourrai pas
+ * distinguer les deux origines. C'est un choix assume, j'ai besoin de savoir
+ * QUELLE option gagne, pas d'ou vient le clic.
+ */
+const BLOC_VISIBLE = `${DEBUT_VISIBLE}
+  <h2>What should I build next</h2>
+  <p>Three things people keep asking me for. <strong>None of them exist yet</strong>,
+  and I would rather build the one you would actually use than guess. Clicking one
+  tells me which, and does nothing else. No payment, no email, no signup.</p>
+  <ul>
+${OPTIONS.map((o) => `    <li><a id="veut2-${o.nom}" href="${RACINE}next/${o.nom}.html">${o.titre}</a>, ${o.prix}</li>`).join("\n")}
+  </ul>
+  ${FIN_VISIBLE}`;
 
 const chemin = join(SITE, "vocal-range-test.html");
 let html = readFileSync(chemin, "utf-8");
@@ -166,6 +194,22 @@ if (html.includes(DEBUT)) {
   }
   html = html.replace(ancre, `    ${bloc}\n${ancre}`);
   console.log("\n  bloc insere dans vocal-range-test.html, apres le panneau de resultat");
+}
+
+// LE SECOND POINT D'INSERTION, DANS LA PROSE.
+if (html.includes(DEBUT_VISIBLE)) {
+  const i = html.indexOf(DEBUT_VISIBLE);
+  const j = html.indexOf(FIN_VISIBLE, i) + FIN_VISIBLE.length;
+  html = html.slice(0, i) + BLOC_VISIBLE + html.slice(j);
+  console.log("  bloc visible remplace");
+} else {
+  const ancreVisible = "  <h2>How to get a result you can trust</h2>";
+  if (!html.includes(ancreVisible)) {
+    console.log("  FAUTE, ancre du bloc visible introuvable");
+    process.exit(1);
+  }
+  html = html.replace(ancreVisible, `${BLOC_VISIBLE}\n\n${ancreVisible}`);
+  console.log("  bloc visible insere avant la section sur la fiabilite");
 }
 
 writeFileSync(chemin, html, "utf-8");
