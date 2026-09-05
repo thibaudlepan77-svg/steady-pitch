@@ -3400,12 +3400,19 @@ function ecranSeance() {
   //
   // Le libelle vient du noyau, `v.consigne`, donc il suit la langue et il dit
   // "Chantez cette note" ou "Jouez cette note" selon le mode choisi.
+  // LE LIBELLE DISAIT "SUIVANT" ET IL NE FAISAIT PAS SUIVANT. Signale par un
+  // inconnu le 2026-09-04, `I ended up in a weird state with two next buttons`.
+  // Il avait raison et je ne l'avais pas reproduit. Quand le micro est ouvert ET
+  // qu'une note vient de finir, l'ecran portait DEUX boutons marques "Next", ce
+  // gros-ci, qui ARRETE l'ecoute, et celui que rend le noyau, qui passe a la
+  // note suivante. Le plus visible des deux etait celui qui ne faisait pas ce
+  // qu'il annoncait. La cle `ecoute_en_cours` existe deja dans les sept langues.
   const principal = el("button", {
-    texte: app.ecoute ? t("suivant", app.langue) : v.consigne,
+    texte: app.ecoute ? t("ecoute_en_cours", app.langue) : v.consigne,
     class: "gros principal",
     onclick: () => (app.ecoute ? arreterEcoute() : demarrerEcoute()),
   });
-  principal.setAttribute("aria-label", app.ecoute ? t("suivant", app.langue) : v.consigne);
+  principal.setAttribute("aria-label", app.ecoute ? t("ecoute_en_cours", app.langue) : v.consigne);
   // Pendant qu'on attend l'autorisation, le bouton se desactive. Le laisser
   // actif inviterait a le recliquer, ce qui empilerait les demandes.
   principal.disabled = !!app.attente;
