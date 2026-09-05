@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Songs that sit inside your vocal range</title>
+<meta name="description" content="Type your lowest and highest comfortable note and see which of 432 songs actually sit inside it. Free, no sign-up.">
+<link rel="canonical" href="https://thibaudlepan77-svg.github.io/steady-pitch/songs-in-your-vocal-range.html">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Crect%20width%3D%2732%27%20height%3D%2732%27%20rx%3D%277%27%20fill%3D%27%238a3324%27%2F%3E%3Cpath%20d%3D%27M6%2021a10%2010%200%200%201%2020%200%27%20fill%3D%27none%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3Cpath%20d%3D%27M16%2021V9%27%20stroke%3D%27%23fbfaf7%27%20stroke-width%3D%272.5%27%20stroke-linecap%3D%27round%27%2F%3E%3C%2Fsvg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--fond:#fbfaf7;--encre:#1b1a17;--doux:#5d5a52;--trait:#ddd8cc;--accent:#8a3324;--lien:#6d2419;--carte:#fff;--surlign:#f3efe4}
+  @media (prefers-color-scheme:dark){
+    :root{--fond:#14150f;--encre:#eceadf;--doux:#a09c8f;--trait:#33342b;--accent:#e0876f;--lien:#f2b09c;--carte:#1c1d16;--surlign:#23241b}
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--fond);color:var(--encre)}
+  body{font-family:"Source Serif 4",Georgia,serif;font-size:17px;line-height:1.55}
+  main{max-width:40rem;margin:0 auto;padding:3rem 1.4rem 5rem}
+  h1{font-size:2rem;line-height:1.18;margin:0 0 .5rem;font-weight:700}
+  .sous{font-size:1.1rem;color:var(--doux);margin:0 0 1.8rem}
+  .lancer{display:inline-block;background:var(--accent);color:var(--fond);text-decoration:none;
+    font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:1.02rem;letter-spacing:.02em;
+    padding:.85rem 1.6rem;border-radius:.35rem;border:none;cursor:pointer}
+  .lancer:hover{filter:brightness(1.1)}
+  .apres{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--doux);margin:.7rem 0 0}
+  h2{font-size:1.05rem;margin:2.4rem 0 .5rem;font-weight:700;border-left:3px solid var(--accent);padding-left:.55rem}
+  p{margin:.7rem 0}
+  ul{margin:.7rem 0 .7rem 1.1rem;padding:0}
+  li{margin:.35rem 0}
+  a{color:var(--lien)}
+  footer{margin-top:3rem;padding-top:.9rem;border-top:1px solid var(--trait);
+    font-family:"IBM Plex Mono",monospace;font-size:.74rem;color:var(--doux)}
+  footer a{color:var(--doux)}
+
+  /* Le test. Il est en haut de page, avant un seul mot d'explication, parce
+     qu'une page qui decrit un outil au lieu d'en etre un ne convertit rien.
+     Mesure du cycle 15, cinq visites et zero clic sur un bouton qui menait
+     ailleurs. */
+  .test{border:1px solid var(--trait);background:var(--carte);border-radius:.5rem;
+    padding:1.3rem 1.2rem 1.2rem;margin:0 0 1.6rem}
+  .etape{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--doux);
+    text-transform:uppercase;letter-spacing:.06em;margin:0 0 .6rem}
+  .consigne{margin:0 0 1.1rem}
+  .vive{font-family:"IBM Plex Mono",monospace;font-size:3.6rem;font-weight:600;
+    text-align:center;line-height:1;letter-spacing:-.02em;margin:.4rem 0}
+  .extreme{font-family:"IBM Plex Mono",monospace;font-size:.9rem;text-align:center;
+    color:var(--doux);margin:0 0 1.2rem;min-height:1.3em}
+  .extreme[data-trouve="oui"]{color:var(--encre)}
+  #tess-erreur{color:var(--accent);font-family:"IBM Plex Mono",monospace;
+    font-size:.78rem;margin:.9rem 0 0}
+  .bornes{font-family:"IBM Plex Mono",monospace;font-size:2.6rem;font-weight:600;
+    text-align:center;margin:.2rem 0 .1rem;letter-spacing:-.02em}
+  .largeur{font-family:"IBM Plex Mono",monospace;text-align:center;color:var(--accent);
+    margin:0 0 .3rem}
+  .type{font-family:"IBM Plex Mono",monospace;font-size:.9rem;text-align:center;
+    color:var(--doux);margin:0 0 1.2rem}
+  .avant{font-size:.86rem;text-align:center;color:var(--doux);
+    border-top:1px solid var(--trait);padding-top:.7rem;margin:0 0 1.2rem}
+  .tess-rang{display:flex;align-items:center;gap:.6rem;margin:.22rem 0}
+  .tess-nom{font-family:"IBM Plex Mono",monospace;font-size:.7rem;color:var(--doux);
+    width:6.4rem;flex:none;text-align:right}
+  .tess-piste{position:relative;flex:1;height:.85rem;background:var(--surlign);
+    border-radius:.2rem}
+  .tess-barre{position:absolute;top:0;bottom:0;border-radius:.2rem}
+  .tess-barre-vous{background:var(--accent)}
+  .tess-barre-ref{background:var(--trait)}
+  .axe{display:flex;justify-content:space-between;font-family:"IBM Plex Mono",monospace;
+    font-size:.66rem;color:var(--doux);margin:.35rem 0 0;padding-left:7rem}
+  .actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1.3rem}
+  .actions button{font-family:"IBM Plex Mono",monospace;font-size:.82rem;
+    color:var(--encre);background:var(--fond);border:1px solid var(--trait);
+    border-radius:.25rem;padding:.5rem .9rem;cursor:pointer}
+  #tess-texte-brut{width:100%;margin-top:.7rem;font-family:"IBM Plex Mono",monospace;
+    font-size:.75rem;padding:.5rem;border:1px solid var(--trait);border-radius:.25rem;
+    background:var(--surlign);color:var(--encre)}
+  .avertissement{font-family:"IBM Plex Mono",monospace;font-size:.75rem;
+    background:var(--surlign);border-radius:.3rem;padding:.7rem .8rem;margin:1rem 0 0;
+    color:var(--doux)}
+  .detail{font-family:"IBM Plex Mono",monospace;font-size:.68rem;color:var(--doux);
+    margin:1rem 0 0}
+  .courbe-titre{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:var(--doux);
+    text-transform:uppercase;letter-spacing:.06em;margin:1.6rem 0 .5rem}
+  .courbe{display:block;width:100%;height:120px;background:var(--surlign);
+    border-radius:.3rem;margin:0}
+  .courbe-legende{font-family:"IBM Plex Mono",monospace;font-size:.66rem;
+    color:var(--doux);margin:.3rem 0 1rem}
+  #tess-suite{border-top:1px solid var(--trait);margin-top:1.4rem;padding-top:1.1rem}
+  .suite-titre{font-size:1.05rem;margin:0 0 .4rem;font-weight:700;border:none;padding:0}
+</style>
+<style>
+#chansons-resultat table { border-collapse: collapse; width: 100%; margin-top: 1rem; }
+#chansons-resultat th, #chansons-resultat td { text-align: left; padding: .35rem .5rem; border-bottom: 1px solid rgba(128,128,128,.3); }
+#chansons-resultat th { font-weight: 600; }
+#chansons-resultat td.note { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.champs { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+.champs label { display: block; font-size: .9rem; }
+.champs input { font: inherit; padding: .4rem; width: 6rem; }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Songs that sit inside your vocal range</h1>
+
+<p>Give it the lowest and highest note you can sing comfortably, and it shows
+which songs stay in that band. Not the notes you can just about scrape once on
+a good morning, the ones you could hold through a whole chorus.</p>
+
+<p>If you do not know your range, <a href="./vocal-range-test.html">the range
+test</a> takes about a minute and hands you two note names you can paste in
+here.</p>
+
+<div class="champs">
+  <label>Lowest comfortable note
+    <input id="ch-bas" type="text" value="A3" autocomplete="off" spellcheck="false"></label>
+  <label>Highest comfortable note
+    <input id="ch-haut" type="text" value="E5" autocomplete="off" spellcheck="false"></label>
+  <label>Room to spare
+    <input id="ch-marge" type="number" value="0" min="-6" max="6" step="1"></label>
+</div>
+
+<p class="apres" id="ch-compte"></p>
+
+<div id="chansons-resultat"></div>
+
+<h2>What the numbers mean</h2>
+
+<p>The two notes on each row are where the melody spends its time, measured on
+the sung line and weighted by how long each note is held. A quaver passed
+through on the way up costs you nothing, a held note costs you everything, so
+counting notes would have been the wrong measure. The extremes are in the
+tooltip on each row, and they are usually wider by a third or so.</p>
+
+<h2>Where this comes from, and what is wrong with it</h2>
+
+<p>The ranges are read out of MIDI transcriptions from the
+<a href="https://colinraffel.com/projects/lmd/">Lakh MIDI Dataset</a>, released
+under CC BY 4.0 by Colin Raffel. That means human beings typed these melodies
+in by ear, and they did not all agree with each other.</p>
+
+<p>Of the 710 songs transcribed more than once,
+145 have transcriptions that contradict each other by an
+octave, give or take a couple of semitones. That is 20.4 percent, and
+the spike sits at exactly twelve semitones, 82 songs against
+5 at six, so it is an octave error rather than noise.</p>
+
+<p>Worse, two transcriptions agreeing does not prove the octave is right.
+24 songs where the transcribers agreed put the sung line above
+C6, where nobody sings. Take On Me came out topping at E6 when Morten Harket
+sings E5. People who type melodies into a sequencer share the same habit of
+writing them where the keyboard is comfortable, so two of them are wrong
+together.</p>
+
+<p>So this list only keeps songs that survive two separate checks. At least two
+transcriptions that agree within a major third, and a range that a human voice
+can actually produce. 3750 songs went in, 432 came out.
+3040 were dropped for having only one transcription,
+239 because their transcriptions disagreed, and
+39 because the result was outside any human voice. Nothing
+is silently shifted an octave to make it fit. A correction invented here would
+be invisible to you, so there are none.</p>
+
+<p>Some bad octaves still get through, and I would rather name one than claim
+the list is clean. Creeping Death by Metallica shows up sitting between B4 and
+B5. James Hetfield sings it an octave below that. Three transcriptions agreed
+with each other and all three were wrong, which is the whole problem in one
+row.</p>
+
+<p>Treat a row as a decent guess, not a fact. If a song on this list feels wrong
+in your voice, it probably is, and I would rather hear about it than not.</p>
+
+<p><a href="./">Steady Pitch home</a></p>
+
+</main>
+<script>
+const CHANSONS = [["What's Up","4 Non Blondes",59,75,53,76],["Nord Sud Ovest Est","883",64,74,62,76],["Does Your Mother Know","ABBA",55,67,54,71],["I'm a Marionette","ABBA",64,69,58,71],["Name of the Game","ABBA",57,71,57,73],["Tiger","ABBA",61,75,60,77],["Waterloo","ABBA",61,71,59,74],["Highway To Hell","AC DC",64,76,62,78],["Beautiful Life","Ace of Base",59,69,51,71],["The Sign","Ace of Base",59,71,59,76],["Janie's Got a Gun","Aerosmith",54,73,46,78],["Even the Nights Are Better","Air Supply",64,81,62,87],["Born Country","Alabama",61,73,57,73],["Y'a d'la rumba dans l'air","Alain Souchon",63,75,60,77],["Summertime Blues","Alan Jackson",40,62,38,62],["No Excuses","Alice in Chains",53,66,49,67],["Baby Baby","Amy Grant",59,72,53,74],["Con Te Partiro","Andrea Bocelli",62,81,60,81],["Vivo Per Lei","Andrea Bocelli",63,79,57,83],["Donna con te","Anna Oxa",67,81,65,86],["Only Time Will Tell","Asia",67,81,67,84],["Takin Care of Business","Bachman-Turner Overdrive",60,64,57,67],["You Ain't Seen Nothin Yet","Bachman-Turner Overdrive",69,78,69,83],["Feel Like Makin' Love","Bad Company",56,68,55,70],["Ready For Love","Bad Company",57,69,55,72],["Run With The Pack","Bad Company",60,69,57,72],["Woman in Love","Barbra Streisand",58,73,58,74],["One Week","Barenaked Ladies",61,69,61,73],["Copacabana","Barry Manilow",56,72,55,75],["I Started a Joke","Bee Gees",64,80,64,81],["To Love Somebody","Bee Gees",69,78,64,78],["Wind Beneath My Wings","Bette Midler",68,81,65,82],["Baby I Love Your Way","Big Mountain",52,66,51,71],["Big Shot","Billy Joel",55,62,50,67],["The Longest Time","Billy Joel",53,65,50,68],["Uptown Girl","Billy Joel",68,82,64,85],["What's My Age Again","blink-182",54,65,51,66],["The Tide Is High","Blondie",66,78,64,78],["Spinning Wheel","Blood, Sweat & Tears",69,76,67,78],["Charmless Man","Blur",64,81,61,81],["Always","Bon Jovi",55,70,45,76],["Bad Medicine","Bon Jovi",61,69,59,71],["Bed of Roses","Bon Jovi",66,82,61,83],["Blaze of Glory","Bon Jovi",67,81,62,83],["Keep the Faith","Bon Jovi",67,82,65,86],["Someday I'll Be Saturday Night","Bon Jovi",66,83,64,88],["More Than A Feeling","Boston",56,77,50,79],["Cat People","BOWIE DAVID",60,79,57,79],["China Girl","BOWIE DAVID",62,76,59,79],["Dans l'eau de la claire Fontaine","Brassens Georges",59,67,57,69],["Aubrey","Bread",62,79,62,79],["Guitar Man","Bread",62,76,62,76],["From the Bottom of My Broken Heart","Britney Spears",57,71,54,74],["Whiskey Under the Bridge","Brooks & Dunn",52,66,47,68],["Ain't Goin' Down ('til the Sun Comes Up)","Brooks Garth",67,78,62,79],["American Honky-Tonk Bar Association","Brooks Garth",64,73,59,74],["The Thunder Rolls","Brooks Garth",48,62,45,62],["I Got You (I Feel Good)","Brown James",56,65,36,72],["The End of the Innocence","Bruce Hornsby",68,77,63,77],["Walk in the Sun","Bruce Hornsby",66,74,64,78],["I'm On Fire","Bruce Springsteen",61,71,61,73],["The River","Bruce Springsteen",64,76,64,79],["Heaven","Bryan Adams",59,67,55,72],["Thought I'd Died and Gone to Heaven","Bryan Adams",59,69,56,71],["Cold Contagious","Bush",59,76,57,81],["Ci vuole un fisico bestiale","Carboni",62,72,62,76],["Faccio I Conti Con Te","Carboni",61,74,57,78],["Mare Mare","Carboni",63,74,57,74],["Nobody Does It Better","Carly Simon",57,70,54,72],["Jambalaya (On the Bayou)","Carpenters",58,69,57,73],["Top of the World","Carpenters",67,81,64,84],["Svalutation","Celentano",61,70,58,72],["(If There Was) Any Other Way","Celine Dion",62,74,57,76],["Mon reve de toujours","Celine Dion",71,84,67,86],["Pour que tu m'aimes encore","Celine Dion",60,71,56,75],["When I Need You","Celine Dion",67,81,67,84],["Shoop Shoop Song","Cher",60,69,55,71],["Pretty Belinda","Chris Andrews",71,81,69,81],["Two Roads","Chris Rea",70,83,67,86],["We Don't Talk Anymore","Cliff Richard",69,83,65,83],["Daar gaat ze","Clouseau",65,74,65,74],["One More Night","Collins Phil",63,77,59,82],["Gangsta's Paradise","Coolio",71,77,67,77],["Baby Baby","Corona",62,74,57,75],["Higher","Creed",54,64,50,67],["Hey Tonight","Creedence Clearwater Revival",59,68,59,71],["Strong Enough","Crow Sheryl",59,69,57,70],["Crying in the Rain","Culture Beat",63,74,62,75],["True Colors","Cyndi Lauper",60,79,55,81],["Caruso","Dalla",57,72,52,74],["Wij vieren feest","De Deurzakkers",64,72,48,74],["The Legend Of Xanadu","Dee",68,78,68,81],["Smoke On The Water","Deep Purple",66,79,60,81],["Love Bites","Def Leppard",60,75,55,75],["Two Steps Behind","Def Leppard",69,76,64,79],["Dreaming of Me","Depeche Mode",63,74,59,74],["Calling Elvis","Dire Straits",57,64,57,66],["Come Undone","Duran Duran",63,79,58,79],["Hungry Like a Wolf","Duran Duran",68,76,67,76],["Notorious","Duran Duran",57,69,57,69],["Ordinary World","Duran Duran",56,66,56,66],["Life in the Fast Lane","Eagles",69,79,67,80],["Love Will Keep Us Alive","Eagles",57,66,57,68],["Lyin' Eyes","Eagles",67,74,62,76],["One of These Nights","Eagles",55,73,54,78],["Peaceful Easy Feeling","Eagles",64,73,61,76],["Tequila Sunrise","Eagles",54,61,50,64],["The Last Resort","Eagles",66,79,62,84],["Victim of Love","Eagles",67,79,65,79],["Wasted Time","Eagles",55,65,48,72],["Witchy Woman","Eagles",55,71,55,73],["Lucky Man","Emerson, Lake & Palmer",52,67,52,67],["Take A Pebble","Emerson, Lake & Palmer",60,75,60,77],["Stop!","Erasure",62,68,62,69],["I've Got a Rock 'n' Roll Heart","Eric Clapton",62,74,59,77],["Santa Monica","Everclear",62,73,61,78],["Rock Me Amadeus","Falco",67,78,67,78],["San Martino","Fiorello",62,78,59,80],["Beach Baby","First Class",69,80,66,81],["Angel","Fleetwood Mac",67,78,62,79],["Dreams","Fleetwood Mac",55,69,55,74],["Gold Dust Woman","Fleetwood Mac",59,65,59,69],["Landslide","Fleetwood Mac",63,77,62,79],["Sara","Fleetwood Mac",57,67,55,72],["My Poor Brain","Foo Fighters",58,71,58,71],["Double Vision","Foreigner",72,81,69,86],["Head Games","Foreigner",56,71,54,75],["Urgent","Foreigner",64,71,59,76],["What Is This Thing Called Love","Frank Sinatra",45,60,40,62],["Relax (Frankie Goes to Dreamscape)","Frankie Goes to Hollywood",71,78,71,79],["Living on My Own","Freddie Mercury",59,72,56,77],["Stupid Girl","Garbage",54,66,52,68],["A Trick of the Tail","Genesis",52,63,49,65],["Abacab","Genesis",60,83,58,84],["Afterglow","Genesis",65,79,62,81],["Hold On My Heart","Genesis",65,79,63,79],["One for the Vine","Genesis",65,84,58,87],["Rock Your Baby","George McCrae",60,75,58,75],["Baker Street","Gerry Rafferty",66,74,57,74],["Get Down","Gilbert O'Sullivan",68,77,65,78],["Rhinestone Cowboy","Glen Campbell",63,76,55,79],["Twilight Zone","Golden Earring",69,78,59,78],["Christie Road","Green Day",66,75,65,78],["Coming Clean","Green Day",67,77,65,77],["Do Da Da","Green Day",68,76,66,78],["In the End","Green Day",67,75,66,77],["Pulling Teeth","Green Day",63,77,63,77],["Walking Contradiction","Green Day",69,76,64,78],["When I Come Around","Green Day",66,75,66,78],["American Woman","Guess Who",67,81,64,83],["November Rain","Guns N' Roses",59,78,54,83],["(We're Gonna) Rock Around The Clock","Haley",57,65,57,67],["Let Her Cry","Hootie & the Blowfish",55,59,50,60],["Radio Dancing","Humperdinck Engelbert",63,74,60,75],["Billie Jean","Jackson Michael",54,71,52,73],["Black or White","Jackson Michael",64,80,64,83],["I Just Can't Stop Loving You","Jackson Michael",69,82,67,85],["Scream","Jackson Michael",63,71,59,78],["The Girl Is Mine","Jackson Michael",64,83,64,85],["Thriller","Jackson Michael",59,73,50,77],["Canned Heat","Jamiroquai",59,69,57,74],["Escapade","Janet Jackson",61,80,60,84],["Living in the Past","Jethro Tull",57,72,57,72],["You Were Meant for Me","Jewel",59,71,55,71],["Hey Joe","Jimi Hendrix",54,67,52,76],["Margaritaville","Jimmy Buffett",62,73,62,74],["A Word in Spanish","John Elton",57,76,52,79],["Believe","John Elton",55,63,53,65],["Blue Eyes","John Elton",58,75,58,77],["Funeral for a Friend","John Elton",69,78,64,81],["I Don't Wanna Go On With You Like That","John Elton",67,76,64,76],["I Guess That's Why They Call It the Blues","John Elton",65,77,62,77],["I'm Still Standing","John Elton",69,79,62,79],["Island Girl","John Elton",69,82,67,84],["Rocket Man","John Elton",66,77,65,82],["Sacrifice","John Elton",70,77,68,78],["Love is in the Air","John Paul Young",64,76,62,79],["Faithfully","Journey",71,80,68,80],["Open Arms","Journey",69,81,66,83],["Ragazzo fortunato","Jovanotti",66,74,64,76],["Dust In The Wind","Kansas",69,79,64,81],["I've Got the Music in Me","Kiki Dee",64,72,62,79],["Plaster Caster","Kiss",59,67,57,69],["Save Your Love","Kiss",58,68,57,73],["Shout It Out Loud","Kiss",64,69,61,71],["The Model","Kraftwerk",64,84,64,96],["Black Dog","Led Zeppelin",67,76,66,76],["Dazed And Confused","Led Zeppelin",62,74,59,78],["Going to California","Led Zeppelin",62,81,57,84],["Good Times Bad Times","Led Zeppelin",54,69,52,71],["How Many More Times","Led Zeppelin",63,76,55,76],["Immigrant Song","Led Zeppelin",54,73,54,76],["Kashmir","Led Zeppelin",69,82,62,84],["Livin' Lovin' Maid","Led Zeppelin",66,72,66,73],["No Quarter","Led Zeppelin",66,80,61,83],["Ramble On","Led Zeppelin",56,71,52,73],["Rock and Roll","Led Zeppelin",60,76,57,76],["Since I've Been Loving You","Led Zeppelin",53,75,48,79],["Ten Years Gone","Led Zeppelin",59,81,50,83],["Thank You","Led Zeppelin",66,79,59,83],["The Battle Of Evermore","Led Zeppelin",67,84,62,88],["Your Time Is Gonna Come","Led Zeppelin",69,81,67,81],["I'd Love You to Want Me","Lobo",65,74,65,75],["Walk On The Wild Side","Lou Reed",57,67,55,67],["(What a) Wonderful World","Louis Armstrong",64,74,60,74],["Hot Girls in Love","Loverboy",61,71,59,71],["This Could Be the Night","Loverboy",64,80,61,83],["Working for the Weekend","Loverboy",59,71,56,71],["Our House","Madness",46,66,41,67],["Bedtime Story","Madonna",67,79,67,79],["Crazy for You","Madonna",57,71,56,73],["Fever","Madonna",57,64,55,71],["Hanky Panky","Madonna",71,77,69,79],["I'll Remember","Madonna",55,66,54,67],["Lucky Star","Madonna",57,69,55,78],["Rain","Madonna",57,67,51,72],["Who's That Girl","Madonna",60,67,55,69],["You'll See","Madonna",59,69,55,72],["Anytime You Need a Friend","Mariah Carey",60,75,55,81],["Butterfly","Mariah Carey",62,81,61,86],["I'll Be There","Mariah Carey",62,84,58,89],["Right Here Waiting","Marx Richard",67,77,67,79],["T'innamorerai","Masini",67,81,64,85],["Band On The Run","McCartney",57,69,52,72],["Down Under","Men at Work",65,82,63,82],["Creeping Death","Metallica",71,83,71,83],["Fade to Black","Metallica",67,78,67,79],["Hero of the Day","Metallica",64,80,57,83],["Nothing Else Matters","Metallica",62,78,59,79],["One","Metallica",64,79,62,79],["The Shortest Straw","Metallica",71,78,71,79],["The Unforgiven","Metallica",67,76,66,79],["Welcome Home (Sanitarium)","Metallica",65,79,64,81],["Jesus to a Child","Michael George",65,76,62,78],["Sacramento","Middle of the Road",67,80,67,83],["Another Cup of Coffee","Mike + The Mechanics",46,66,46,68],["Chiedimi tutto","Mina",72,84,69,84],["Torno venerdi","Mina",71,83,66,83],["Always Look on the Bright Side of Life","Monty Python",62,71,59,76],["Children of the Night","Nakatomi",59,69,57,71],["America","Neil Diamond",64,77,59,79],["Beautiful Noise","Neil Diamond",60,74,55,74],["Play Me","Neil Diamond",52,69,45,74],["Sweet Caroline","Neil Diamond",45,69,38,72],["Blue Monday","New Order",62,69,60,69],["March of the Pigs","Nine Inch Nails",55,69,54,74],["All Apologies","Nirvana",50,66,48,66],["Pennyroyal Tea","Nirvana",69,77,67,77],["Polly","Nirvana",58,67,57,67],["Rape Me","Nirvana",66,83,61,83],["Sifting","Nirvana",59,71,57,71],["Sliver","Nirvana",60,69,60,69],["Verse Chorus Verse (outtake, 1991)","Nirvana",68,76,68,78],["Ala bianca","Nomadi",67,78,66,79],["Canzone per un'amica","Nomadi",62,74,54,79],["Gli aironi neri","Nomadi",62,76,62,79],["Do You Know What I Mean","Oasis",54,66,52,66],["Stand by Me","Oasis",55,63,52,64],["Whatever","Oasis",64,73,62,76],["Innocent","Oldfield, Mike",72,81,69,83],["We Belong","Pat Benatar",55,70,53,72],["Every Time You Go Away","Paul Young",65,81,65,86],["Straight Up","Paula Abdul",60,70,57,72],["Reunited","Peaches & Herb",58,68,56,73],["Always on My Mind   In My House","Pet Shop Boys",63,73,62,75],["Go West","Pet Shop Boys",64,76,64,79],["I Dig Rock 'n' Roll Music","Peter, Paul & Mary",54,64,48,64],["Puff","Peter, Paul & Mary",60,69,59,69],["High Hopes","Pink Floyd",60,75,55,75],["The Trial","Pink Floyd",59,72,52,83],["Amici per sempre","Pooh",56,69,54,69],["Il silenzio della colomba","Pooh",56,68,54,71],["A Whiter Shade Of Pale","Procol Harum",67,81,67,81],["Another One Bites The Dust","Queen",64,84,55,86],["Now I'm Here","Queen",67,84,64,88],["The Miracle","Queen",44,54,44,54],["Jet City Woman","Queensryche",68,83,66,85],["Cose della vita (Can't Stop Thinking of You)","Ramazzotti",64,77,64,81],["Under The Bridge","Red Hot Chili Peppers",59,68,57,73],["We Don't Talk Anymore","Richard Cliff",67,82,64,84],["Endless Love","RICHIE LIONEL",60,82,58,91],["Hello","RICHIE LIONEL",68,77,64,79],["Some Guys Have All the Luck","Rod Stewart",71,81,69,81],["Crash! Boom! Bang!","Roxette",71,81,68,85],["Listen to Your Heart","Roxette",61,72,59,75],["Spending My Time","Roxette",54,71,54,75],["Countdown","Rush",40,64,40,64],["Spirit of Radio","Rush",62,70,56,76],["Time and Motion","Rush",54,70,50,70],["Keep Looking","Sade",67,83,55,88],["Smooth Operator","Sade",62,69,57,72],["Smooth","Santana",50,64,43,67],["Send Me an Angel","Scorpions",58,70,58,72],["Forrest Gump San Francisco (Be Sure to Wear Some Flowers in Your Hair)","Scott McKenzie",63,76,54,79],["Bridge Over Toubled Water","Simon & Garfunkel",63,79,58,80],["Bridge Over Troubled Water","Simon & Garfunkel",63,79,63,80],["The Sound of Silence","Simon & Garfunkel",64,78,62,79],["Anything Goes","Sinatra",60,73,59,76],["I Get A Kick Out Of You","Sinatra",58,73,57,75],["My Funny Valentine","Sinatra",60,74,56,74],["Night and Day","Sinatra",59,75,57,75],["We Are Family","Sister Sledge",63,73,59,74],["Family Affair","Sly & The Family Stone",55,69,48,72],["Walkin on the Sun","Smash Mouth",47,65,42,68],["The First the Last Eternity (Till the End)","Snap",54,68,54,73],["All I Ever Need Is You","Sonny & Cher",64,76,62,80],["The Beat Goes On","Sonny & Cher",55,69,52,70],["Runaway Train","Soul Asylum",62,74,60,76],["Black Hole Sun","Soundgarden",67,78,63,80],["True","Spandau Ballet",55,67,55,68],["2 Become 1","Spice Girls",54,70,53,74],["Say You'll Be There","Spice Girls",58,66,57,82],["Peg","Steely Dan",52,67,52,69],["It Might Be You (Theme From Tootsie)","Stephen Bishop",66,78,61,82],["Edge of Seventeen","Stevie Nicks",52,69,48,71],["English Man In New York","Sting",55,66,52,69],["Dead & Bloated","Stone Temple Pilots",59,66,57,69],["Pretty Penny","Stone Temple Pilots",71,76,71,76],["Stray Cat Strut","Stray Cats",60,75,60,77],["Boat on the River","Styx",67,79,62,82],["Breakfast in America","Supertramp",57,67,55,68],["It's Raining Again","Supertramp",58,70,53,72],["School","Supertramp",69,76,64,79],["Take the Long Way Home","Supertramp",57,67,55,67],["Everything Changes","Take That",57,67,52,70],["Everybody Wants To Rule The World","Tears for Fears",62,78,62,81],["Don't Answer Me","The Alan Parsons Project",59,67,57,71],["Blue Sky","The Allman Brothers Band",64,76,64,76],["Melissa","The Allman Brothers Band",64,75,59,78],["The House of the Rising Sun","The Animals",52,69,45,69],["California Girls","The Beach Boys",54,71,53,75],["Don't Worry Baby","The Beach Boys",59,70,57,73],["Fun, Fun, Fun","The Beach Boys",65,77,65,79],["Good Vibrations","The Beach Boys",46,68,46,75],["Help Me Rhonda","The Beach Boys",53,65,51,66],["Sloop John 'B'","The Beach Boys",62,74,62,74],["Surfer Girl","The Beach Boys",62,75,57,80],["Surfin' Safari","The Beach Boys",60,73,58,79],["A Hard Day's Night","The Beatles",70,81,63,86],["Act Naturally","The Beatles",69,76,67,76],["Bad Boy","The Beatles",60,67,55,70],["Birthday","The Beatles",61,72,60,72],["Can't Buy Me Love","The Beatles",58,67,55,67],["Carol","The Beatles",55,67,55,67],["Come and Get It","The Beatles",48,60,48,64],["Cry Baby Cry","The Beatles",64,71,62,74],["Day Tripper","The Beatles",49,70,48,72],["Devil in Her Heart","The Beatles",55,66,54,67],["Eleanor Rigby","The Beatles",64,78,64,81],["Everybody's Got Something to Hide Except Me and My Monkey","The Beatles",62,69,59,73],["Everybody's Trying To Be My Baby","The Beatles",53,60,51,60],["Get Back","The Beatles",62,77,62,77],["Getting Better","The Beatles",57,72,55,81],["Glad All Over","The Beatles",60,75,60,75],["Happiness Is a Warm Gun","The Beatles",60,81,55,86],["Helter Skelter","The Beatles",62,72,59,76],["Here Comes the Sun","The Beatles",66,73,64,73],["Hey Bulldog","The Beatles",59,66,57,66],["I'm Down","The Beatles",55,67,55,70],["Long, Long, Long","The Beatles",62,82,60,82],["Lovely Rita","The Beatles",59,76,52,78],["Lucy in the Sky With Diamonds","The Beatles",62,79,60,81],["Matchbox","The Beatles",57,64,57,64],["Mean Mr. Mustard","The Beatles",53,63,52,66],["Ob-La-Di, Ob-La-Da","The Beatles",65,77,64,77],["Oh! Darling","The Beatles",57,72,57,76],["Old Brown Shoe","The Beatles",55,76,51,76],["One After 909","The Beatles",60,66,58,66],["Paperback Writer","The Beatles",59,71,55,74],["Rain","The Beatles",67,76,67,76],["Sexy Sadie","The Beatles",64,81,62,84],["Slow Down","The Beatles",57,67,57,67],["Strawberry Fields Forever","The Beatles",65,74,65,77],["Sun King","The Beatles",55,69,55,72],["The Inner Light","The Beatles",61,73,61,73],["The Long and Winding Road","The Beatles",67,75,63,80],["What You're Doing","The Beatles",65,72,60,72],["What's the New Mary Jane","The Beatles",56,68,55,68],["Why Don't We Do It in the Road","The Beatles",65,81,62,86],["Within You Without You","The Beatles",57,75,52,77],["Yellow Submarine","The Beatles",63,74,61,76],["Yes It Is","The Beatles",64,76,64,80],["You Never Give Me Your Money","The Beatles",65,76,62,81],["Turn! Turn! Turn!","The Byrds",66,78,62,79],["Rock in the Casbah","The Clash",57,72,55,76],["At Your Side","The Corrs",61,67,59,69],["Heaven Knows","The Corrs",57,69,57,69],["I Never Loved You Anyway","The Corrs",62,70,60,70],["Leave Me Alone","The Corrs",55,64,55,67],["Love Gives Love Takes","The Corrs",57,76,57,81],["So Young","The Corrs",57,72,57,72],["Someday","The Corrs",59,73,57,73],["Salvation","The Cranberries",58,67,55,67],["Twenty One","The Cranberries",65,70,62,74],["Close to Me","The Cure",68,78,66,78],["Friday I'm In Love","The Cure",62,78,55,81],["All I Have to Do Is Dream","The Everly Brothers",61,73,59,75],["Bye Bye Love","The Everly Brothers",56,66,52,66],["Cathy's Clown","The Everly Brothers",55,66,55,67],["Dawn (Go Away)","The Four Seasons",57,76,53,77],["Dont You Want Me","The Human League",55,67,52,67],["Chanson D'Amour","The Manhattan Transfer",57,71,56,74],["The Night Nights in White Satin","The Moody Blues",64,78,64,79],["Gone Away","The Offspring",70,84,64,84],["Smoke Gets in Your Eyes","The Platters",63,80,58,80],["Don't Stand So Close","The Police",65,82,62,82],["Every Little Thing She Does Is Magic","The Police",57,69,52,72],["Spirits in the Material World","The Police",67,74,64,74],["I'll Stand By You","The Pretenders",72,81,65,86],["Ruby Tuesday","The Rolling Stones",61,77,55,78],["Start Me Up","The Rolling Stones",65,77,62,81],["You Can't Always Get What You Want","The Rolling Stones",69,77,62,81],["Today","The Smashing Pumpkins",66,78,61,83],["Amapola","The Spotnicks",60,76,58,78],["Substitute","The Who",69,78,64,79],["Mama Told Me (Not To Come)","Three Dog Night",67,82,65,83],["The Best","Tina Turner",60,72,57,74],["Happy Thogether","Turtles",63,76,60,78],["Homely Girl","UB40",62,76,62,79],["Ain't Talkin 'bout Love","Van Halen",72,84,64,84],["Jump","Van Halen",69,79,67,82],["Why Can't This Be Love","Van Halen",72,83,67,84],["Moondance","Van Morrison",67,81,64,81],["Buddy Holly","Weezer",65,83,64,92],["Undone","Weezer",70,79,70,79],["Your Woman","White Town",65,74,60,74],["I Have Nothing","Whitney Houston",60,74,55,79],["My Cherie Amour","Wonder Stevie",58,69,57,72],["Owner of a Lonely Heart","Yes",62,73,62,81],["Roundabout","Yes",59,73,55,74],["Diamante","Zucchero",55,65,48,67],["Gimme All Your Lovin","ZZ Top",62,69,62,69]];
+const NOMS = ["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const nommer = (m) => NOMS[m % 12] + (Math.floor(m / 12) - 1);
+
+/* Accepte do diese 4, C#4, c#4, Db4. Rend null sur tout le reste, et l'appelant
+ * garde alors la derniere etendue valide plutot que de vider l'ecran pendant
+ * qu'on tape. */
+function lireNote(texte) {
+  const m = /^\s*([A-Ga-g])\s*([#b]?)\s*(-?\d)\s*$/.exec(texte);
+  if (!m) return null;
+  const base = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1].toUpperCase()];
+  const alteration = m[2] === "#" ? 1 : m[2] === "b" ? -1 : 0;
+  return base + alteration + (Number(m[3]) + 1) * 12;
+}
+
+const bas = document.getElementById("ch-bas");
+const haut = document.getElementById("ch-haut");
+const marge = document.getElementById("ch-marge");
+const compte = document.getElementById("ch-compte");
+const sortie = document.getElementById("chansons-resultat");
+
+function afficher() {
+  const b = lireNote(bas.value);
+  const h = lireNote(haut.value);
+  if (b === null || h === null || h <= b) {
+    compte.textContent = "Give me two notes like A3 and E5, the higher one second.";
+    sortie.innerHTML = "";
+    return;
+  }
+  const jeu = Number(marge.value) || 0;
+  const tiennent = CHANSONS.filter((c) => c[2] >= b - jeu && c[3] <= h + jeu);
+  compte.textContent = tiennent.length + " of " + CHANSONS.length +
+    " songs sit inside " + nommer(b) + " to " + nommer(h) +
+    (jeu ? " with " + jeu + " semitones of slack" : "") + ".";
+  if (!tiennent.length) {
+    sortie.innerHTML = "<p>Nothing fits. Widen the band, or add a semitone or two of slack.</p>";
+    return;
+  }
+  const lignes = tiennent.map((c) =>
+    "<tr title=\"full melody spans " + nommer(c[4]) + " to " + nommer(c[5]) + "\">" +
+    "<td>" + c[0] + "</td><td>" + c[1] + "</td>" +
+    "<td class=\"note\">" + nommer(c[2]) + " to " + nommer(c[3]) + "</td></tr>").join("");
+  sortie.innerHTML = "<table><thead><tr><th>Song</th><th>Artist</th>" +
+    "<th>Sits between</th></tr></thead><tbody>" + lignes + "</tbody></table>";
+}
+
+for (const champ of [bas, haut, marge]) champ.addEventListener("input", afficher);
+afficher();
+</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "6e7ddbc8884540f49b6e0db4841dbd2f"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
