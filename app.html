@@ -3132,7 +3132,7 @@ function ecranAccueil() {
     ligne.appendChild(el("label", { for: "tess", texte: t("tessiture", app.langue) }));
     const sel = el("select", { id: "tess" });
     for (const nom of Object.keys(TONIQUE_PAR_TESSITURE)) {
-      const o = el("option", { value: nom, texte: t("tess_" + nom, app.langue) });
+      const o = el("option", { value: nom, texte: nom });
       if (nom === app.tessiture) o.selected = true;
       sel.appendChild(o);
     }
