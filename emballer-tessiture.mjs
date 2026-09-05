@@ -54,6 +54,15 @@ couper(/<!-- Cloudflare Web Analytics -->[\s\S]*?<!-- End Cloudflare Web Analyti
   "la balise de mesure");
 couper(/\s*<p class="apres" id="tess-vente">[\s\S]*?<\/p>/, "le paragraphe de vente");
 
+// LES DEUX BLOCS DE MESURE DE DEMANDE SORTENT DU FICHIER HORS LIGNE.
+// Ils demandent au lecteur laquelle de trois choses inexistantes il voudrait, ce
+// qui a un sens sur une page publique et aucun dans un fichier qu'on a
+// telecharge et qu'on ouvre sans reseau. Leurs liens sont absolus, donc ils
+// marcheraient, mais offrir trois choses qui n'existent pas a quelqu'un qui
+// vient de recevoir son fichier est du bruit dans un produit livre.
+couper(/\s*<!-- DEMANDE:DEBUT -->[\s\S]*?<!-- DEMANDE:FIN -->/, "le bloc de demande du resultat");
+couper(/\s*<!-- DEMANDE-VISIBLE:DEBUT -->[\s\S]*?<!-- DEMANDE-VISIBLE:FIN -->/, "le bloc de demande visible");
+
 // Les liens internes. `./app.html` devient le fichier voisin, les autres
 // partent vers le site, ou ils existent pour de bon.
 // Les fichiers VOISINS, ceux que l'acheteur a recus dans le meme lot. Ils
