@@ -236,6 +236,17 @@ document.addEventListener("click", (e) => {
     fine.</li>
   </ul>
 
+  <p><strong>If you sing low, your microphone is probably lying to you.</strong>
+  A reader tested his laptop mic in Audacity on 5 September 2026 and found the
+  waveform simply vanishes below C2. Most laptop and headset mics are voiced for
+  speech, which lives above roughly 150Hz, and they roll off hard underneath
+  that. The test switches off echo cancellation, noise suppression and automatic
+  gain, which are the three things a browser would otherwise use to flatten
+  exactly what is being measured, but none of that puts back what the hardware
+  never captured. So if your bottom note comes out around C2 or E2 and stops
+  dead there, suspect the microphone before you believe the number. A phone
+  usually does better than a laptop on the low end.</p>
+
   <h2>One page per voice type</h2>
   <p>If you are testing against a type you already suspect, each of the six has
   its own page. Same test, same detector, and the reference range for that type
