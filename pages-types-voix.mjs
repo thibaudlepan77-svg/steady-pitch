@@ -174,10 +174,11 @@ const TYPES = [
   <a href="./baritone-vocal-range-test.html">the baritone page</a> and trust the
   comfort more than the extreme.</p>`],
       ["Getting a top note the detector will believe",
-       `<p>The test only counts a note you hold. A note that flashes past on the
-  way up is discarded, because a single frame at the top of a sweep is almost
-  always the detector slipping an octave rather than you singing. That rule
-  costs you the note you screamed and keeps the one you sang.</p>
+       `<p>The test discards a single frame at the top of a sweep, because one
+  frame up there is almost always the detector slipping an octave rather than
+  you singing. It wants about a fifth of a second of steady pitch, so a
+  screamed note that lasts an instant will not survive, and a slow slide
+  sometimes does.</p>
   <p>Slide up rather than jumping. Use an open <em>ah</em>. Stop before the
   sound turns into a shout, because a top note produced by force is not a note
   you can use, and a range built on it describes a voice you do not have.</p>`],
@@ -309,10 +310,10 @@ const TYPES = [
   themselves, in both directions. A quiet, breathy top note gives the detector
   very little to work with, and a forced one is full of noise. Either can
   produce a reading an octave away from what you sang.</p>
-  <p>This test only counts notes you hold for about three seconds, which throws
-  away most of that. Slide up rather than jumping to the extreme, sing an open
-  <em>ah</em> rather than humming, and stop at the last note that still sounds
-  like singing. The number will be lower than the one a generous test gives you,
+  <p>This test never counts a single frame, and it asks for about a fifth of a
+  second of steady pitch, which is less than it sounds. Slide up rather than
+  jumping to the extreme, sing an open <em>ah</em> rather than humming, and stop
+  at the last note that still sounds like singing. The number will be lower than the one a generous test gives you,
   and you will be able to use it.</p>`],
     ],
   },
@@ -327,10 +328,11 @@ const TYPES = [
 // ---------------------------------------------------------------------------
 
 const COMMUN = `  <h2>Getting a result you can trust</h2>
-  <p>The test listens for a note you <em>hold</em>. A note that flashes past on
-  the way through is not counted, because a single frame at the end of a sweep
-  is almost always the detector slipping an octave rather than you singing. Hold
-  each end for about three seconds and you will see it lock on.</p>
+  <p>The test listens for a note you <em>hold</em>. A single frame is never
+  counted, because one frame at the end of a sweep is almost always the detector
+  slipping an octave rather than you singing. It asks for about a fifth of a
+  second of steady pitch, so a slow slide can still leave a mark on the way
+  past.</p>
   <ul>
     <li>Sing an open <em>ah</em>, out loud. Humming is quieter and the low end
     of a hum is often too breathy to read.</li>

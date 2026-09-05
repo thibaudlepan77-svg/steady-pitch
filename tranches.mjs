@@ -39,7 +39,30 @@ function tranche(depuis, jusqu, garderFin) {
 }
 
 export const STYLE = tranche('<link rel="preconnect" href="https://fonts.googleapis.com">', "</style>", true);
-export const TEST = tranche('<div class="test">', '<p><a class="lancer" href="./">Open the live pitch monitor', false);
+/**
+ * Le bloc de mesure de demande est PROPRE a la page maitresse et ne se recopie
+ * pas. Deux raisons. Les pages de type de voix n'ont recu aucune visite au
+ * releve du 2026-09-05, donc il n'y gagnerait rien. Et il ajoute une soixantaine
+ * de mots identiques a chaque page, ce qui a fait tomber quatre d'entre elles
+ * sous le seuil de prose propre du controle plus bas. Un garde qui refuse est
+ * un garde qui marche, on retire la cause et non le garde.
+ */
+const DEBUT_DEMANDE = "<!-- DEMANDE:DEBUT -->";
+const FIN_DEMANDE = "<!-- DEMANDE:FIN -->";
+
+function sansDemande(html) {
+  const i = html.indexOf(DEBUT_DEMANDE);
+  if (i < 0) return html;
+  const j = html.indexOf(FIN_DEMANDE, i);
+  if (j < 0) {
+    plaintes.push("bloc DEMANDE ouvert et jamais ferme dans le modele");
+    return html;
+  }
+  return html.slice(0, i) + html.slice(j + FIN_DEMANDE.length);
+}
+
+export const TEST = sansDemande(
+  tranche('<div class="test">', '<p><a class="lancer" href="./">Open the live pitch monitor', false));
 export const CODE = tranche("<script>\n/* TESSITURE:DEBUT */", "/* TESSITURE:FIN */\n</script>", true);
 export const ICONE = tranche('<link rel="icon" href="data:image/svg+xml', ">", true);
 export const BEACON = tranche("<!-- Cloudflare Web Analytics -->", "<!-- End Cloudflare Web Analytics -->", true);
